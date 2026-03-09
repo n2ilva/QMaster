@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
-import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS } from '@/constants/score-levels';
+import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS, SCORE_LEVEL_RANGES, SCORE_LEVELS } from '@/constants/score-levels';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { ensureUserProfile, fetchUserProgress, fetchUsersByLevel, getScoreLevel, type ScoreLevel, type UserProfile } from '@/lib/api';
@@ -30,13 +30,12 @@ export default function CommunityScreen() {
 
     try {
       setLoading(true);
-      console.log('[Community] Carregando comunidade para usuário:', user.id);
-      
+
       // Garante que o usuário tem um perfil na comunidade
       if (user.name) {
         await ensureUserProfile(user.id, user.name);
       }
-      
+
       // Use cached progress on first load if available, otherwise fetch
       let scoreLevel: ScoreLevel;
       if (isFirstLoad.current && cachedProgress) {
@@ -44,26 +43,18 @@ export default function CommunityScreen() {
         isFirstLoad.current = false;
       } else {
         const progress = await fetchUserProgress(user.id);
-        console.log('[Community] Progresso do usuário:', progress);
         scoreLevel = getScoreLevel(progress.totalScore);
         isFirstLoad.current = false;
       }
-      
-      console.log('[Community] Nível de medalha calculado:', scoreLevel);
+
       setUserScoreLevel(scoreLevel);
 
-      // Busca todos os usuários com o mesmo nível de medalha
       const communityUsers = await fetchUsersByLevel(scoreLevel, 100);
-      console.log('[Community] Usuários encontrados:', communityUsers.length);
       setUsers(communityUsers);
 
-      // Encontra a posição do usuário atual no ranking
       const currentPosition = communityUsers.findIndex(u => u.userId === user.id);
-      console.log('[Community] Posição do usuário:', currentPosition);
       if (currentPosition !== -1) {
         setCurrentUserRank(currentPosition + 1);
-      } else {
-        console.warn('[Community] Usuário não encontrado no ranking!');
       }
     } catch (error) {
       console.error('Erro ao carregar comunidade:', error);
@@ -214,16 +205,11 @@ export default function CommunityScreen() {
                 <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
                   <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600', marginBottom: 14 }}>Medalhas</Text>
                   <View style={{ gap: 8 }}>
-                    {[
-                      { emoji: '🥉', label: 'Bronze', range: '0 — 500 pts', color: '#CD7F32' },
-                      { emoji: '🥈', label: 'Prata', range: '501 — 1.500 pts', color: '#C0C0C0' },
-                      { emoji: '🥇', label: 'Ouro', range: '1.501 — 3.000 pts', color: '#FFD700' },
-                      { emoji: '💎', label: 'Diamante', range: '3.000+ pts', color: '#00CED1' },
-                    ].map((m) => (
-                      <View key={m.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, backgroundColor: '#151718', borderRadius: 8, paddingHorizontal: 10 }}>
-                        <Text style={{ fontSize: 16 }}>{m.emoji}</Text>
-                        <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '600', flex: 1 }}>{m.label}</Text>
-                        <Text style={{ color: m.color, fontSize: 11 }}>{m.range}</Text>
+                    {SCORE_LEVELS.map((level) => (
+                      <View key={level} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, backgroundColor: '#151718', borderRadius: 8, paddingHorizontal: 10 }}>
+                        <Text style={{ fontSize: 16 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
+                        <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '600', flex: 1 }}>{level}</Text>
+                        <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 11 }}>{SCORE_LEVEL_RANGES[level]}</Text>
                       </View>
                     ))}
                   </View>

@@ -8,18 +8,18 @@ import { ActivityIndicator, Animated, Platform, Pressable, ScrollView, Text, Vie
 import { GlossaryText } from '@/components/glossary-text';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import {
-    clearInProgressLesson,
-    fetchCards,
-    fetchInProgressLesson,
-    fetchMasterTestCards,
-    resolveTrackLabel,
-    saveCardResult,
-    saveLesson,
-    updateUserProfile,
-    upsertInProgressLesson,
-    type DifficultyProgress,
-    type Flashcard,
-    type UserLevel,
+  clearInProgressLesson,
+  fetchCards,
+  fetchInProgressLesson,
+  fetchMasterTestCards,
+  resolveTrackLabel,
+  saveCardResult,
+  saveLesson,
+  updateUserProfile,
+  upsertInProgressLesson,
+  type DifficultyProgress,
+  type Flashcard,
+  type UserLevel,
 } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
 import { useData } from '@/providers/data-provider';
@@ -299,9 +299,7 @@ export default function StudySessionScreen() {
           }
           // Atualiza o perfil do usuário na comunidade
           if (user.name) {
-            console.log('Atualizando perfil do usuário:', user.id, user.name);
             await updateUserProfile(user.id, user.name);
-            console.log('Perfil atualizado com sucesso!');
           }
           // Refresh cached progress so other tabs are up to date
           await refreshUserProgress();

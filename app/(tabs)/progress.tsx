@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { SCORE_LEVEL_EMOJIS, SCORE_LEVEL_NAMES } from '@/constants/score-levels';
+import { SCORE_LEVEL_EMOJIS } from '@/constants/score-levels';
 import { trackLabels } from '@/data/tracks';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
@@ -262,7 +262,7 @@ export default function ProgressScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <Text style={{ fontSize: 26 }}>{SCORE_LEVEL_EMOJIS[scoreLevel]}</Text>
                   <View style={{ backgroundColor: '#3F51B520', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                    <Text style={{ color: '#818CF8', fontSize: 11, fontWeight: '700' }}>{SCORE_LEVEL_NAMES[scoreLevel]}</Text>
+                    <Text style={{ color: '#818CF8', fontSize: 11, fontWeight: '700' }}>{scoreLevel}</Text>
                   </View>
                 </View>
                 <Text style={{ color: '#ECEDEE', fontSize: 30, fontWeight: '800' }}>{score}</Text>
@@ -405,7 +405,7 @@ export default function ProgressScreen() {
             <View className="items-center justify-center rounded-2xl border-2 border-[#3F51B5] bg-[#3F51B5]/5 p-4">
               <Text className="text-5xl">{SCORE_LEVEL_EMOJIS[scoreLevel]}</Text>
               <Text className="mt-2 text-lg font-bold text-[#3F51B5]">
-                {SCORE_LEVEL_NAMES[scoreLevel]}
+                {scoreLevel}
               </Text>
               <Text className="mt-1 text-sm text-[#687076] dark:text-[#9BA1A6]">
                 {score} pontos

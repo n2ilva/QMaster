@@ -14,9 +14,16 @@ export const SCORE_LEVEL_COLORS: Record<ScoreLevel, string> = {
   Diamante: "#00CED1",
 };
 
-export const SCORE_LEVEL_NAMES: Record<ScoreLevel, string> = {
-  Bronze: "Bronze",
-  Prata: "Prata",
-  Ouro: "Ouro",
-  Diamante: "Diamante",
+export const SCORE_LEVELS: ScoreLevel[] = [
+  "Bronze",
+  "Prata",
+  "Ouro",
+  "Diamante",
+];
+
+export const SCORE_LEVEL_RANGES: Record<ScoreLevel, string> = {
+  Bronze: "0 — 500 pts",
+  Prata: "501 — 1.500 pts",
+  Ouro: "1.501 — 3.000 pts",
+  Diamante: "3.000+ pts",
 };

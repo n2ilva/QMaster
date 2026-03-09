@@ -2,6 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS, SCORE_LEVEL_RANGES, SCORE_LEVELS } from '@/constants/score-levels';
 import { TRACK_STYLE_FALLBACK, trackStyles, type TrackIcon } from '@/constants/track-styles';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useLogout } from '@/hooks/use-logout';
@@ -193,14 +194,9 @@ export default function HomeScreen() {
                 <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>Medalhas</Text>
               </View>
               <View style={{ gap: 8 }}>
-                {[
-                  { emoji: '🥉', label: 'Bronze', range: '0 — 500 pts', color: '#CD7F32' },
-                  { emoji: '🥈', label: 'Prata', range: '501 — 1.500 pts', color: '#9CA3AF' },
-                  { emoji: '🥇', label: 'Ouro', range: '1.501 — 3.000 pts', color: '#F59E0B' },
-                  { emoji: '💎', label: 'Diamante', range: '3.000+ pts', color: '#60A5FA' },
-                ].map((m) => (
+                {SCORE_LEVELS.map((level) => (
                   <View
-                    key={m.label}
+                    key={level}
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
@@ -210,9 +206,9 @@ export default function HomeScreen() {
                       paddingHorizontal: 12,
                       paddingVertical: 10,
                     }}>
-                    <Text style={{ fontSize: 18 }}>{m.emoji}</Text>
-                    <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600', flex: 1 }}>{m.label}</Text>
-                    <Text style={{ color: m.color, fontSize: 12, fontWeight: '500' }}>{m.range}</Text>
+                    <Text style={{ fontSize: 18 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
+                    <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600', flex: 1 }}>{level}</Text>
+                    <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 12, fontWeight: '500' }}>{SCORE_LEVEL_RANGES[level]}</Text>
                   </View>
                 ))}
               </View>
@@ -321,13 +317,14 @@ export default function HomeScreen() {
         </View>
         <View className="mt-3 flex-row flex-wrap justify-between gap-y-2">
           {themes.map((t) => (
-            <View
-              key={t.key}
-              className="flex-row items-center gap-2 rounded-lg px-3 py-2"
-              style={{ backgroundColor: `${t.color}12` }}>
-              <MaterialIcons name={t.icon} size={14} color={t.color} />
-              <Text className="text-xs font-medium" style={{ color: t.color }}>{t.label}</Text>
-            </View>
+            <Link key={t.key} href={`/ready/${encodeURIComponent(t.key)}`} asChild>
+              <Pressable
+                className="flex-row items-center gap-2 rounded-lg px-3 py-2 active:opacity-70"
+                style={{ backgroundColor: `${t.color}12` }}>
+                <MaterialIcons name={t.icon} size={14} color={t.color} />
+                <Text className="text-xs font-medium" style={{ color: t.color }}>{t.label}</Text>
+              </Pressable>
+            </Link>
           ))}
         </View>
       </View>
@@ -381,16 +378,11 @@ export default function HomeScreen() {
           <Text className="text-base font-semibold text-[#11181C] dark:text-[#ECEDEE]">Medalhas</Text>
         </View>
         <View className="mt-3 gap-2.5">
-          {[
-            { emoji: '🥉', label: 'Bronze', range: '0 — 500 pts', color: '#CD7F32' },
-            { emoji: '🥈', label: 'Prata', range: '501 — 1.500 pts', color: '#9CA3AF' },
-            { emoji: '🥇', label: 'Ouro', range: '1.501 — 3.000 pts', color: '#F59E0B' },
-            { emoji: '💎', label: 'Diamante', range: '3.000+ pts', color: '#60A5FA' },
-          ].map((m) => (
-            <View key={m.label} className="flex-row items-center gap-3 rounded-xl bg-white px-3 py-2.5 dark:bg-[#151718]">
-              <Text className="text-lg">{m.emoji}</Text>
-              <Text className="flex-1 text-sm font-semibold text-[#11181C] dark:text-[#ECEDEE]">{m.label}</Text>
-              <Text className="text-xs font-medium" style={{ color: m.color }}>{m.range}</Text>
+          {SCORE_LEVELS.map((level) => (
+            <View key={level} className="flex-row items-center gap-3 rounded-xl bg-white px-3 py-2.5 dark:bg-[#151718]">
+              <Text className="text-lg">{SCORE_LEVEL_EMOJIS[level]}</Text>
+              <Text className="flex-1 text-sm font-semibold text-[#11181C] dark:text-[#ECEDEE]">{level}</Text>
+              <Text className="text-xs font-medium" style={{ color: SCORE_LEVEL_COLORS[level] }}>{SCORE_LEVEL_RANGES[level]}</Text>
             </View>
           ))}
         </View>
