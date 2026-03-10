@@ -8,7 +8,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useScreenSize } from '@/hooks/use-screen-size';
 import { useStudyReminders } from '@/hooks/use-study-reminders';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
 import { DataProvider, useData } from '@/providers/data-provider';
@@ -28,7 +28,7 @@ export const unstable_settings = {
 function RootNavigator() {
   const pathname = usePathname();
   const router = useRouter();
-  const isDesktop = useIsDesktop();
+  const { isDesktop, isTablet } = useScreenSize();
   const { user, isLoading } = useAuth();
   const { isPreloading, preloadProgress } = useData();
   const isInitializing = isLoading || (user != null && isPreloading);
@@ -78,7 +78,7 @@ function RootNavigator() {
           options={{
             title: 'Categorias',
             headerBackTitle: 'Voltar',
-            headerShown: !isDesktop,
+            headerShown: !(isDesktop || isTablet),
           }}
         />
         <Stack.Screen
@@ -86,7 +86,15 @@ function RootNavigator() {
           options={{
             title: 'Quizzes',
             headerBackTitle: 'Voltar',
-            headerShown: !isDesktop,
+            headerShown: !(isDesktop || isTablet),
+          }}
+        />
+        <Stack.Screen
+          name="ready/planned"
+          options={{
+            title: 'Planejamento de Estudos',
+            headerBackTitle: 'Voltar',
+            headerShown: !(isDesktop || isTablet),
           }}
         />
         <Stack.Screen
@@ -94,7 +102,7 @@ function RootNavigator() {
           options={{
             title: 'Pesquisa',
             headerBackTitle: 'Voltar',
-            headerShown: !isDesktop,
+            headerShown: !(isDesktop || isTablet),
           }}
         />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />

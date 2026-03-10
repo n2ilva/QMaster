@@ -3,10 +3,10 @@ import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GlossaryText } from '@/components/glossary-text';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useScreenSize } from '@/hooks/use-screen-size';
 import {
   clearInProgressLesson,
   fetchCards,
@@ -125,8 +125,7 @@ export default function StudySessionScreen() {
     }
   }, [answer.revealed]);
 
-  const isWeb = Platform.OS === 'web';
-  const isDesktopWidth = useIsDesktop();
+  const { isDesktop: isDesktopWidth, isTablet: isTabletWidth } = useScreenSize();
 
   // ---- Load cards ----
   useEffect(() => {
@@ -432,14 +431,14 @@ export default function StudySessionScreen() {
 
   // ---- Exercise screen ----
   return (
-    <View className="flex-1 bg-white px-5 pt-14 dark:bg-[#151718]" style={isDesktopWidth ? { alignItems: 'center' } : undefined}>
+    <View className="flex-1 bg-white px-5 pt-14 dark:bg-[#151718]" style={(isDesktopWidth || isTabletWidth) ? { alignItems: 'center' } : undefined}>
       <View
         style={[
           { flex: 1 },
-          isDesktopWidth ? { width: '60%', alignSelf: 'center' } : isWeb ? { width: '100%', alignSelf: 'center' } : undefined,
+          isDesktopWidth || isTabletWidth ? { width: '60%', alignSelf: 'center' } : undefined,
         ]}>
       {/* Header */}
-      {isDesktopWidth && (
+      {(isDesktopWidth || isTabletWidth) && (
         <Pressable
           onPress={() => router.back()}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16, alignSelf: 'flex-start' }}>

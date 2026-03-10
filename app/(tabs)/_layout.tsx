@@ -6,8 +6,8 @@ import { DesktopSidebar } from '@/components/desktop-sidebar';
 import { HapticTab } from '@/components/ui/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useLogout } from '@/hooks/use-logout';
+import { useScreenSize } from '@/hooks/use-screen-size';
 
 function DesktopTabLayout() {
   const { handleLogout } = useLogout();
@@ -86,9 +86,9 @@ function MobileTabLayout() {
 }
 
 export default function TabLayout() {
-  const isDesktop = useIsDesktop();
+  const { isDesktop, isTablet } = useScreenSize();
 
-  if (isDesktop) {
+  if (isDesktop || isTablet) {
     return <DesktopTabLayout />;
   }
 

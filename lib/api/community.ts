@@ -48,11 +48,49 @@ export async function updateUserProfile(
   let totalQuestions = 0;
   let totalDuration = 0;
 
+  // Aggregate per-category stats
+  const categoryMap = new Map<
+    string,
+    { track: string; correct: number; total: number; duration: number }
+  >();
+
   lessonsSnapshot.docs.forEach((d) => {
     const data = d.data() as LessonRecord;
     totalCorrect += data.correctCount;
     totalQuestions += data.totalCount;
     totalDuration += data.durationMs;
+    const key = data.category;
+    const existing = categoryMap.get(key);
+    if (existing) {
+      existing.correct += data.correctCount;
+      existing.total += data.totalCount;
+      existing.duration += data.durationMs;
+    } else {
+      categoryMap.set(key, {
+        track: data.track ?? "",
+        correct: data.correctCount,
+        total: data.totalCount,
+        duration: data.durationMs,
+      });
+    }
+  });
+
+  // Find top category by most questions answered
+  let topCategory: string | undefined;
+  let topCategoryTrack: string | undefined;
+  let topCategoryAccuracy: number | undefined;
+  let topCategoryAvgTimeMs: number | undefined;
+  let topTotal = 0;
+  categoryMap.forEach((val, key) => {
+    if (val.total > topTotal) {
+      topTotal = val.total;
+      topCategory = key;
+      topCategoryTrack = val.track;
+      topCategoryAccuracy =
+        val.total > 0 ? Math.round((val.correct / val.total) * 100) : 0;
+      topCategoryAvgTimeMs =
+        val.total > 0 ? Math.round(val.duration / val.total) : 0;
+    }
   });
 
   const avgTimePerQuestion =
@@ -91,6 +129,12 @@ export async function updateUserProfile(
     overallAccuracy: accuracy,
     avgTimePerQuestion,
     streak,
+    ...(topCategory !== undefined && {
+      topCategory,
+      topCategoryTrack: topCategoryTrack ?? "",
+      topCategoryAccuracy: topCategoryAccuracy ?? 0,
+      topCategoryAvgTimeMs: topCategoryAvgTimeMs ?? 0,
+    }),
     updatedAt: serverTimestamp(),
   });
   await batch.commit();
@@ -144,6 +188,13 @@ export async function fetchUsersByLevel(
             avgTimePerQuestion: (d.data().avgTimePerQuestion as number) ?? 0,
             streak: (d.data().streak as number) ?? 0,
             updatedAt: d.data().updatedAt,
+            topCategory: (d.data().topCategory as string) ?? undefined,
+            topCategoryTrack:
+              (d.data().topCategoryTrack as string) ?? undefined,
+            topCategoryAccuracy:
+              (d.data().topCategoryAccuracy as number) ?? undefined,
+            topCategoryAvgTimeMs:
+              (d.data().topCategoryAvgTimeMs as number) ?? undefined,
           };
         })
         .filter((user) => user.scoreLevel === level)

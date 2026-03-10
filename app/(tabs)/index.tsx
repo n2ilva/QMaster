@@ -2,10 +2,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Link } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS, SCORE_LEVEL_RANGES, SCORE_LEVELS } from '@/constants/score-levels';
 import { TRACK_STYLE_FALLBACK, trackStyles, type TrackIcon } from '@/constants/track-styles';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useLogout } from '@/hooks/use-logout';
+import { useScreenSize } from '@/hooks/use-screen-size';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { useAuth } from '@/providers/auth-provider';
 import { useData } from '@/providers/data-provider';
@@ -23,6 +22,7 @@ type FeatureItem = {
 };
 
 const features: FeatureItem[] = [
+  { icon: 'auto-awesome', text: 'Crie um planejamento de estudos personalizado' },
   { icon: 'menu-book', text: 'Glossário interativo com termos técnicos' },
   { icon: 'lightbulb', text: 'Explicações detalhadas e exemplos práticos' },
   { icon: 'emoji-events', text: 'Medalhas: Bronze, Prata, Ouro e Diamante' },
@@ -38,7 +38,7 @@ export default function HomeScreen() {
   const bottomPadding = useTabContentPadding();
   const { user } = useAuth();
   const { trackCatalog, dbStats: stats } = useData();
-  const isDesktop = useIsDesktop();
+  const { isDesktop, isTablet, isMobile } = useScreenSize();
   const { loggingOut, handleLogout } = useLogout();
 
   const themes: ThemeItem[] = trackCatalog.map((item) => {
@@ -51,12 +51,16 @@ export default function HomeScreen() {
     };
   });
 
-  if (isDesktop) {
+  if (isDesktop || isTablet) {
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: '#111316' }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomPadding, padding: 32 }}>
+        contentContainerStyle={{
+          paddingBottom: bottomPadding,
+          padding: 32,
+          paddingTop: 32,
+        }}>
 
         {/* Desktop Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 28, gap: 16 }}>
@@ -127,8 +131,8 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Main 2-column grid */}
-        <View style={{ flexDirection: 'row', gap: 16 }}>
+        {/* Main grid – 2 cols on desktop, stacked on tablet */}
+        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 16 }}>
           {/* Left column */}
           <View style={{ flex: 3, gap: 16 }}>
 
@@ -138,25 +142,37 @@ export default function HomeScreen() {
                 <MaterialIcons name="school" size={18} color="#A5B4FC" />
                 <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>Temas disponíveis</Text>
               </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
-                {themes.map((t) => (
-                  <Link key={t.key} href={`/ready/${encodeURIComponent(t.key)}`} asChild>
-                    <Pressable
-                      style={({ pressed }) => ({
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 8,
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderRadius: 10,
-                        backgroundColor: pressed ? `${t.color}20` : `${t.color}12`,
-                        borderWidth: 1,
-                        borderColor: `${t.color}25`,
-                      })}>
-                      <MaterialIcons name={t.icon} size={15} color={t.color} />
-                      <Text style={{ color: t.color, fontSize: 13, fontWeight: '500' }}>{t.label}</Text>
-                    </Pressable>
-                  </Link>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {[0, 1, 2].map((colIdx) => (
+                  <View key={colIdx} style={{ flex: 1, gap: 10 }}>
+                    {themes.filter((_, i) => i % 3 === colIdx).map((t) => (
+                      <View
+                        key={t.key}
+                        style={{
+                          backgroundColor: t.color,
+                          borderRadius: 14,
+                          padding: 2,
+                          overflow: 'hidden',
+                        }}>
+                        <Link href={`/ready/${encodeURIComponent(t.key)}`} asChild>
+                          <Pressable
+                            style={({ pressed }) => ({
+                              width: '100%',
+                              height: 60,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: pressed ? '#17191C' : '#111316',
+                              borderRadius: 12,
+                              paddingHorizontal: 4,
+                            })}>
+                            <Text style={{ color: '#ECEDEE', fontSize: 16, fontWeight: '700', textAlign: 'center', padding: 10 }} numberOfLines={2}>
+                              {t.label}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      </View>
+                    ))}
+                  </View>
                 ))}
               </View>
             </View>
@@ -175,8 +191,8 @@ export default function HomeScreen() {
                   { n: '4', text: 'Perguntas erradas voltam mais frequência — repetição espaçada para fixar', bold: ['repetição espaçada'] },
                 ].map((step) => (
                   <View key={step.n} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(63,81,181,0.15)', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                      <Text style={{ color: '#A5B4FC', fontSize: 11, fontWeight: '700' }}>{step.n}</Text>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#3F51B5', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{step.n}</Text>
                     </View>
                     <Text style={{ color: '#9BA1A6', fontSize: 13, lineHeight: 20, flex: 1 }}>{step.text}</Text>
                   </View>
@@ -187,36 +203,6 @@ export default function HomeScreen() {
 
           {/* Right column */}
           <View style={{ flex: 2, gap: 16 }}>
-            {/* Medals */}
-            <View style={{ backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <MaterialIcons name="emoji-events" size={18} color="#F59E0B" />
-                <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>Medalhas</Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                {SCORE_LEVELS.map((level) => (
-                  <View
-                    key={level}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                      backgroundColor: '#151718',
-                      borderRadius: 10,
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                    }}>
-                    <Text style={{ fontSize: 18 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
-                    <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600', flex: 1 }}>{level}</Text>
-                    <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 12, fontWeight: '500' }}>{SCORE_LEVEL_RANGES[level]}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 12, lineHeight: 16 }}>
-                Pontuação baseada em questões respondidas, taxa de acerto e velocidade.
-              </Text>
-            </View>
-
             {/* Features */}
             <View style={{ backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -315,16 +301,37 @@ export default function HomeScreen() {
           <MaterialIcons name="school" size={18} color="#687076" />
           <Text className="text-base font-semibold text-[#11181C] dark:text-[#ECEDEE]">Temas disponíveis</Text>
         </View>
-        <View className="mt-3 flex-row flex-wrap justify-between gap-y-2">
-          {themes.map((t) => (
-            <Link key={t.key} href={`/ready/${encodeURIComponent(t.key)}`} asChild>
-              <Pressable
-                className="flex-row items-center gap-2 rounded-lg px-3 py-2 active:opacity-70"
-                style={{ backgroundColor: `${t.color}12` }}>
-                <MaterialIcons name={t.icon} size={14} color={t.color} />
-                <Text className="text-xs font-medium" style={{ color: t.color }}>{t.label}</Text>
-              </Pressable>
-            </Link>
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          {[0, 1].map((colIdx) => (
+            <View key={colIdx} style={{ flex: 1, gap: 10 }}>
+              {themes.filter((_, i) => i % 2 === colIdx).map((t) => (
+                <View
+                  key={t.key}
+                  style={{
+                    backgroundColor: t.color,
+                    borderRadius: 14,
+                    padding: 2,
+                    overflow: 'hidden',
+                  }}>
+                  <Link href={`/ready/${encodeURIComponent(t.key)}`} asChild>
+                    <Pressable
+                      style={({ pressed }) => ({
+                        width: '100%',
+                        height: 60,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: pressed ? '#17191C' : '#111316',
+                        borderRadius: 12,
+                        paddingHorizontal: 4,
+                      })}>
+                      <Text style={{ color: '#ECEDEE', fontSize: 14, fontWeight: '700', textAlign: 'center', padding: 10 }} numberOfLines={2}>
+                        {t.label}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
+              ))}
+            </View>
           ))}
         </View>
       </View>
@@ -337,58 +344,38 @@ export default function HomeScreen() {
         </View>
         <View className="mt-3 gap-3">
           <View className="flex-row items-start gap-2.5">
-            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]/10">
-              <Text className="text-[10px] font-bold text-[#3F51B5]">1</Text>
+            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]">
+              <Text className="text-[10px] font-bold text-white">1</Text>
             </View>
             <Text className="flex-1 text-sm leading-5 text-[#687076] dark:text-[#9BA1A6]">
               Escolha um <Text className="font-semibold text-[#11181C] dark:text-[#ECEDEE]">tema</Text> e uma <Text className="font-semibold text-[#11181C] dark:text-[#ECEDEE]">categoria</Text> na aba Quiz
             </Text>
           </View>
           <View className="flex-row items-start gap-2.5">
-            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]/10">
-              <Text className="text-[10px] font-bold text-[#3F51B5]">2</Text>
+            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]">
+              <Text className="text-[10px] font-bold text-white">2</Text>
             </View>
             <Text className="flex-1 text-sm leading-5 text-[#687076] dark:text-[#9BA1A6]">
               O sistema seleciona automaticamente as <Text className="font-semibold text-[#11181C] dark:text-[#ECEDEE]">melhores perguntas</Text> para você com base no seu desempenho
             </Text>
           </View>
           <View className="flex-row items-start gap-2.5">
-            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]/10">
-              <Text className="text-[10px] font-bold text-[#3F51B5]">3</Text>
+            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]">
+              <Text className="text-[10px] font-bold text-white">3</Text>
             </View>
             <Text className="flex-1 text-sm leading-5 text-[#687076] dark:text-[#9BA1A6]">
               Responda e aprenda com <Text className="font-semibold text-[#11181C] dark:text-[#ECEDEE]">explicações detalhadas</Text> e exemplos
             </Text>
           </View>
           <View className="flex-row items-start gap-2.5">
-            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]/10">
-              <Text className="text-[10px] font-bold text-[#3F51B5]">4</Text>
+            <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-[#3F51B5]">
+              <Text className="text-[10px] font-bold text-white">4</Text>
             </View>
             <Text className="flex-1 text-sm leading-5 text-[#687076] dark:text-[#9BA1A6]">
               Perguntas que você errou voltam com mais frequência — <Text className="font-semibold text-[#11181C] dark:text-[#ECEDEE]">repetição espaçada</Text> para fixar o conteúdo
             </Text>
           </View>
         </View>
-      </View>
-
-      {/* Medals */}
-      <View className="mt-3 rounded-2xl bg-[#FAFBFC] p-4 dark:bg-[#1A1D21]">
-        <View className="flex-row items-center gap-2">
-          <MaterialIcons name="emoji-events" size={18} color="#F59E0B" />
-          <Text className="text-base font-semibold text-[#11181C] dark:text-[#ECEDEE]">Medalhas</Text>
-        </View>
-        <View className="mt-3 gap-2.5">
-          {SCORE_LEVELS.map((level) => (
-            <View key={level} className="flex-row items-center gap-3 rounded-xl bg-white px-3 py-2.5 dark:bg-[#151718]">
-              <Text className="text-lg">{SCORE_LEVEL_EMOJIS[level]}</Text>
-              <Text className="flex-1 text-sm font-semibold text-[#11181C] dark:text-[#ECEDEE]">{level}</Text>
-              <Text className="text-xs font-medium" style={{ color: SCORE_LEVEL_COLORS[level] }}>{SCORE_LEVEL_RANGES[level]}</Text>
-            </View>
-          ))}
-        </View>
-        <Text className="mt-3 text-xs leading-4 text-[#9BA1A6]">
-          Pontuação baseada em questões respondidas, taxa de acerto e velocidade.
-        </Text>
       </View>
 
       {/* Features */}

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps 
 import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { DesktopSidebar } from '@/components/desktop-sidebar';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useScreenSize } from '@/hooks/use-screen-size';
 import {
     fetchCategoryStats,
     getCategoriesForTrack,
@@ -48,65 +48,67 @@ function CategoryCard({
   const buttonIcon = hasInProgress ? 'play-arrow' : uniqueStudied > 0 ? 'replay' : 'play-arrow';
 
   return (
-    <View className="rounded-2xl border border-[#E6E8EB] bg-[#FAFBFC] p-4 dark:border-[#30363D] dark:bg-[#1A1D21] md:w-[48.5%]">
-      {/* Title */}
-      <View className="flex-row items-center gap-3">
-        <View className="h-2 w-2 rounded-full" style={{ backgroundColor: accentColor }} />
-        <Text className="flex-1 text-base font-semibold text-[#11181C] dark:text-[#ECEDEE]">
-          {cat}
-        </Text>
-        {dueForReview > 0 && (
-          <View className="flex-row items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/30">
-            <MaterialIcons name="schedule" size={11} color="#F59E0B" />
-            <Text className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
-              {dueForReview} p/ revisar
+    <View style={{ backgroundColor: accentColor, borderRadius: 14, padding: 2, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: '#111316', borderRadius: 12, padding: 16 }}>
+        {/* Title */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <Text style={{ flex: 1, color: '#ECEDEE', fontSize: 15, fontWeight: '700' }}>{cat}</Text>
+          {dueForReview > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+              <MaterialIcons name="schedule" size={11} color="#1A1000" />
+              <Text style={{ color: '#1A1000', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Stats row */}
+        <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="check-circle" size={13} color={accentColor} />
+            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
+            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+              {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
             </Text>
           </View>
-        )}
-      </View>
-
-      {/* Stats row */}
-      <View className="mt-3 flex-row items-center gap-4">
-        <View className="flex-row items-center gap-1.5">
-          <MaterialIcons name="check-circle" size={13} color={accentColor} />
-          <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">Acertos:</Text>
-          <Text className="text-xs font-bold text-[#11181C] dark:text-[#ECEDEE]">
-            {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="style" size={13} color="#6B7280" />
+            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
+            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+              {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
+            </Text>
+          </View>
         </View>
-        <View className="flex-row items-center gap-1.5">
-          <MaterialIcons name="style" size={13} color="#9BA1A6" />
-          <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">Estudados:</Text>
-          <Text className="text-xs font-bold text-[#11181C] dark:text-[#ECEDEE]">
-            {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
-          </Text>
+
+        {/* Accuracy bar */}
+        <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+          <View
+            style={{
+              height: '100%',
+              borderRadius: 4,
+              width: `${uniqueStudied > 0 ? accuracy : 0}%`,
+              backgroundColor: accentColor,
+            }}
+          />
         </View>
-      </View>
 
-
-
-      {/* Accuracy bar */}
-      <View className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E8EB] dark:bg-[#2A2F36]">
-        <View
-          className="h-full rounded-full"
-          style={{
-            width: `${uniqueStudied > 0 ? accuracy : 0}%`,
-            backgroundColor:
-              accuracy >= 80 ? '#22C55E' : accuracy >= 50 ? '#F59E0B' : '#EF4444',
-          }}
-        />
-      </View>
-
-      {/* Action button */}
-      <View className="mt-3">
+        {/* Action button */}
         <Link
           href={`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`}
           asChild>
           <Pressable
-            className="flex-row items-center justify-center gap-1.5 rounded-xl py-3 active:opacity-80"
-            style={{ backgroundColor: '#3F51B5' }}>
-            <MaterialIcons name={buttonIcon} size={16} color="#FFFFFF" />
-            <Text className="text-xs font-bold text-white">{buttonLabel}</Text>
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              backgroundColor: pressed ? '#1e2a5e22' : 'transparent',
+              borderWidth: 1,
+              borderColor: '#3F51B5',
+              borderRadius: 10,
+              paddingVertical: 10,
+            })}>
+            <MaterialIcons name={buttonIcon} size={15} color="#818CF8" />
+            <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700' }}>{buttonLabel}</Text>
           </Pressable>
         </Link>
       </View>
@@ -143,75 +145,71 @@ function CategoryCardDesktop({
   const buttonIcon: ComponentProps<typeof MaterialIcons>['name'] = hasInProgress ? 'play-arrow' : uniqueStudied > 0 ? 'replay' : 'play-arrow';
 
   return (
-    <Link
-      href={`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`}
-      asChild>
-      <Pressable
-        style={({ pressed }) => ({
-          backgroundColor: pressed ? '#13151a' : '#0D0F10',
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: '#1E2328',
-          overflow: 'hidden',
-          opacity: pressed ? 0.92 : 1,
-        })}>
-        {/* Barra de acento lateral */}
-        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: accentColor, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }} />
-
-        <View style={{ paddingVertical: 18, paddingLeft: 24, paddingRight: 20 }}>
-          {/* Linha superior: nome + badge revisão */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <Text style={{ flex: 1, color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>{cat}</Text>
-            {dueForReview > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#451a03', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-                <MaterialIcons name="schedule" size={11} color="#F59E0B" />
-                <Text style={{ color: '#F59E0B', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Stats row */}
-          <View style={{ flexDirection: 'row', gap: 20, marginBottom: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <MaterialIcons name="check-circle" size={13} color={accentColor} />
-              <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
-              <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-                {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
-              </Text>
+    <View style={{ backgroundColor: accentColor, borderRadius: 14, padding: 2, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: '#111316', borderRadius: 12, padding: 16 }}>
+        {/* Linha superior: nome + badge revisão */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <Text style={{ flex: 1, color: '#ECEDEE', fontSize: 15, fontWeight: '700' }}>{cat}</Text>
+          {dueForReview > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+              <MaterialIcons name="schedule" size={11} color="#1A1000" />
+              <Text style={{ color: '#1A1000', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <MaterialIcons name="style" size={13} color="#6B7280" />
-              <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
-              <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-                {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
-              </Text>
-            </View>
+          )}
+        </View>
+
+        {/* Stats row */}
+        <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="check-circle" size={13} color={accentColor} />
+            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
+            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+              {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
+            </Text>
           </View>
-
-
-
-          {/* Barra de progresso */}
-          <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden', marginBottom: 14 }}>
-            <View
-              style={{
-                height: '100%',
-                borderRadius: 4,
-                width: `${uniqueStudied > 0 ? accuracy : 0}%`,
-                backgroundColor: accentColor,
-              }}
-            />
-          </View>
-
-          {/* Botão */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#3F51B520', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 }}>
-              <MaterialIcons name={buttonIcon} size={15} color="#818CF8" />
-              <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '600' }}>{buttonLabel}</Text>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name="style" size={13} color="#6B7280" />
+            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
+            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+              {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
+            </Text>
           </View>
         </View>
-      </Pressable>
-    </Link>
+
+        {/* Barra de progresso */}
+        <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+          <View
+            style={{
+              height: '100%',
+              borderRadius: 4,
+              width: `${uniqueStudied > 0 ? accuracy : 0}%`,
+              backgroundColor: accentColor,
+            }}
+          />
+        </View>
+
+        {/* Botão */}
+        <Link
+          href={`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`}
+          asChild>
+          <Pressable
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              backgroundColor: pressed ? '#1e2a5e22' : 'transparent',
+              borderWidth: 1,
+              borderColor: '#3F51B5',
+              borderRadius: 10,
+              paddingVertical: 10,
+            })}>
+            <MaterialIcons name={buttonIcon} size={15} color="#818CF8" />
+            <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700' }}>{buttonLabel}</Text>
+          </Pressable>
+        </Link>
+      </View>
+    </View>
   );
 }
 
@@ -312,7 +310,7 @@ export default function ReadyTrackCategoriesScreen() {
   const { track: encodedTrack } = useLocalSearchParams<{ track: string }>();
   const { user } = useAuth();
   const router = useRouter();
-  const isDesktop = useIsDesktop();
+  const { isDesktop, isTablet, isMobile } = useScreenSize();
   const track = useMemo(() => decodeURIComponent(encodedTrack ?? ''), [encodedTrack]);
   const label = resolveTrackLabel(track);
 
@@ -383,16 +381,20 @@ export default function ReadyTrackCategoriesScreen() {
     });
   }, [categories, searchTerm, statsMap]);
 
-  if (isDesktop) {
+  if (isDesktop || isTablet) {
     return (
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#0D0F10' }}>
-        <DesktopSidebar />
+        {(isDesktop || isTablet) && <DesktopSidebar />}
 
         {/* Conteúdo principal */}
         <ScrollView
           style={{ flex: 1, backgroundColor: '#111316' }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 32, paddingBottom: 48 }}>
+          contentContainerStyle={{
+            padding: 32,
+            paddingTop: 32,
+            paddingBottom: 48,
+          }}>
 
           {/* Breadcrumb / voltar */}
           <Pressable

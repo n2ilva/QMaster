@@ -88,6 +88,10 @@ export type UserProfile = {
   avgTimePerQuestion: number;
   streak: number;
   updatedAt: unknown;
+  topCategory?: string;
+  topCategoryTrack?: string;
+  topCategoryAccuracy?: number;
+  topCategoryAvgTimeMs?: number;
 };
 
 /** Progress data stored in users/{uid}/profile - used by community */

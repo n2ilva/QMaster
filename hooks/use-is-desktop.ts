@@ -1,23 +1,9 @@
-import { useEffect, useState } from "react";
-import { Dimensions, Platform } from "react-native";
+import { useScreenSize } from "./use-screen-size";
 
-const DESKTOP_BREAKPOINT = 1024;
-
+/**
+ * @deprecated Use `useScreenSize()` instead for Desktop / Tablet / Mobile support.
+ */
 export function useIsDesktop(): boolean {
-  const [isDesktop, setIsDesktop] = useState(() => {
-    if (Platform.OS !== "web") return false;
-    return Dimensions.get("window").width >= DESKTOP_BREAKPOINT;
-  });
-
-  useEffect(() => {
-    if (Platform.OS !== "web") return;
-
-    const subscription = Dimensions.addEventListener("change", ({ window }) => {
-      setIsDesktop(window.width >= DESKTOP_BREAKPOINT);
-    });
-
-    return () => subscription.remove();
-  }, []);
-
+  const { isDesktop } = useScreenSize();
   return isDesktop;
 }

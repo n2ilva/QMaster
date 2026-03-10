@@ -21,16 +21,10 @@ body {
   position: relative;
 }
 
-/* Tablet (≥ 640px): centralizado com largura fixa */
-@media (min-width: 640px) and (max-width: 1023px) {
+/* Tablet (≥ 768px) e Desktop (≥ 1024px): fullwidth com sidebar */
+@media (min-width: 768px) {
   #root {
-    max-width: 540px;
-  }
-}
-
-/* Desktop (≥ 1024px): fullwidth com sidebar */
-@media (min-width: 1024px) {
-  #root {
+    width: 100%;
     max-width: 100%;
   }
 }

@@ -1,7 +1,7 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Platform } from "react-native";
 
-import { useIsDesktop } from "./use-is-desktop";
+import { useScreenSize } from "./use-screen-size";
 
 const WEB_FIXED_TAB_BAR_HEIGHT = 80;
 
@@ -15,7 +15,7 @@ const WEB_FIXED_TAB_BAR_HEIGHT = 80;
  */
 export function useTabContentPadding(extra = 24): number {
   const tabBarHeight = useBottomTabBarHeight();
-  const isDesktop = useIsDesktop();
+  const { isDesktop } = useScreenSize();
 
   if (isDesktop) {
     return extra;

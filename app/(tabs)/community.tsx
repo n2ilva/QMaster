@@ -1,9 +1,9 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS, SCORE_LEVEL_RANGES, SCORE_LEVELS } from '@/constants/score-levels';
-import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useScreenSize } from '@/hooks/use-screen-size';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { ensureUserProfile, fetchUserProgress, fetchUsersByLevel, getScoreLevel, type ScoreLevel, type UserProfile } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
@@ -13,13 +13,14 @@ export default function CommunityScreen() {
   const bottomPadding = useTabContentPadding();
   const { user } = useAuth();
   const { userProgress: cachedProgress } = useData();
-  const isDesktop = useIsDesktop();
+  const { isDesktop, isTablet, isMobile } = useScreenSize();
 
   const cachedScoreLevel = cachedProgress ? getScoreLevel(cachedProgress.totalScore) : 'Bronze';
   const [loading, setLoading] = useState(true);
   const [userScoreLevel, setUserScoreLevel] = useState<ScoreLevel>(cachedScoreLevel);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const isFirstLoad = useRef(true);
 
   const loadCommunity = useCallback(async () => {
@@ -72,12 +73,16 @@ export default function CommunityScreen() {
     }, [loadCommunity])
   );
 
-  if (isDesktop) {
+  if (isDesktop || isTablet) {
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: '#111316' }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 32, paddingBottom: bottomPadding }}>
+        contentContainerStyle={{
+          padding: 32,
+          paddingTop: 32,
+          paddingBottom: bottomPadding,
+        }}>
 
         {/* Desktop Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 28, gap: 16 }}>
@@ -105,10 +110,44 @@ export default function CommunityScreen() {
             <ActivityIndicator size="large" color="#A5B4FC" />
           </View>
         ) : (
-          <View style={{ flexDirection: 'row', gap: 24, alignItems: 'flex-start' }}>
+          <>
+            {/* Linha superior: Como funciona + Medalhas */}
+            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
+              <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <Text style={{ fontSize: 20 }}>🏆</Text>
+                  <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>Como funciona?</Text>
+                </View>
+                <View style={{ gap: 10 }}>
+                  {[
+                    { icon: '📌', text: 'Base: 1 ponto por questão respondida' },
+                    { icon: '🎯', text: 'Acurácia: Até 50% de bônus por taxa de acerto' },
+                    { icon: '⚡', text: 'Velocidade: Até 25% de bônus por responder rápido' },
+                  ].map((item, i) => (
+                    <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 15 }}>{item.icon}</Text>
+                      <Text style={{ color: '#9BA1A6', fontSize: 12, lineHeight: 18, flex: 1 }}>{item.text}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
 
-            {/* Ranking list — largura limitada */}
-            <View style={{ flex: 1, maxWidth: 560, gap: 8 }}>
+              <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
+                <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600', marginBottom: 14 }}>Medalhas</Text>
+                <View style={{ gap: 8 }}>
+                  {SCORE_LEVELS.map((level) => (
+                    <View key={level} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, backgroundColor: '#151718', borderRadius: 8, paddingHorizontal: 10 }}>
+                      <Text style={{ fontSize: 16 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
+                      <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '600', flex: 1 }}>{level}</Text>
+                      <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 11 }}>{SCORE_LEVEL_RANGES[level]}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {/* Ranking list */}
+            <View style={{ gap: 8 }}>
               {users.length === 0 ? (
                 <Text style={{ color: '#687076', textAlign: 'center', marginTop: 40 }}>
                   Nenhum usuário encontrado neste nível.
@@ -117,18 +156,23 @@ export default function CommunityScreen() {
                 users.map((userProfile, index) => {
                   const isCurrentUser = userProfile.userId === user?.id;
                   const levelColor = SCORE_LEVEL_COLORS[userProfile.scoreLevel] ?? '#6B7280';
+                  const isExpanded = expandedUserId === userProfile.userId;
                   return (
-                    <View
+                    <Pressable
                       key={userProfile.userId}
-                      style={{
+                      onPress={() => setExpandedUserId(isExpanded ? null : userProfile.userId)}
+                      style={({ pressed }) => ({
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        borderColor: isCurrentUser ? 'rgba(245,158,11,0.4)' : '#1E2328',
+                        backgroundColor: pressed ? '#17191C' : isCurrentUser ? 'rgba(245,158,11,0.07)' : '#0D0F10',
+                        overflow: 'hidden',
+                      })}>
+                    <View style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 12,
                         padding: 14,
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: isCurrentUser ? 'rgba(245,158,11,0.4)' : '#1E2328',
-                        backgroundColor: isCurrentUser ? 'rgba(245,158,11,0.07)' : '#0D0F10',
                       }}>
                       {/* Rank badge */}
                       <View style={{
@@ -175,48 +219,40 @@ export default function CommunityScreen() {
                         <Text style={{ color: levelColor, fontSize: 11 }}>{userProfile.scoreLevel}</Text>
                       </View>
                     </View>
+
+                    {/* Mini-card expandido */}
+                    {isExpanded && (
+                      <View style={{ borderTopWidth: 1, borderTopColor: '#1E2328', marginHorizontal: 14, marginBottom: 14, paddingTop: 12 }}>
+                        {userProfile.topCategory ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ color: '#9BA1A6', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Tema mais estudado</Text>
+                              <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '700' }}>{userProfile.topCategory}</Text>
+                              {userProfile.topCategoryTrack ? (
+                                <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>{userProfile.topCategoryTrack}</Text>
+                              ) : null}
+                            </View>
+                            <View style={{ alignItems: 'center', gap: 2 }}>
+                              <Text style={{ color: '#9BA1A6', fontSize: 10 }}>Acerto</Text>
+                              <Text style={{ color: (userProfile.topCategoryAccuracy ?? 0) >= 80 ? '#22C55E' : (userProfile.topCategoryAccuracy ?? 0) >= 50 ? '#F59E0B' : '#EF4444', fontSize: 16, fontWeight: '800' }}>{userProfile.topCategoryAccuracy ?? 0}%</Text>
+                            </View>
+                            <View style={{ width: 1, height: 36, backgroundColor: '#1E2328' }} />
+                            <View style={{ alignItems: 'center', gap: 2 }}>
+                              <Text style={{ color: '#9BA1A6', fontSize: 10 }}>Tempo/questão</Text>
+                              <Text style={{ color: '#A5B4FC', fontSize: 13, fontWeight: '700' }}>{userProfile.topCategoryAvgTimeMs ? (userProfile.topCategoryAvgTimeMs / 1000).toFixed(1) + 's' : '—'}</Text>
+                            </View>
+                          </View>
+                        ) : (
+                          <Text style={{ color: '#6B7280', fontSize: 12, textAlign: 'center' }}>Sem dados de categorias disponíveis.</Text>
+                        )}
+                      </View>
+                    )}
+                    </Pressable>
                   );
                 })
               )}
             </View>
-
-            {/* Sidebar direita — informações */}
-            <View style={{ flex: 1, gap: 16, flexShrink: 0 }}>
-              <View style={{ flexDirection: 'row', gap: 16 }}>
-                <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                    <Text style={{ fontSize: 20 }}>🏆</Text>
-                    <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600' }}>Como funciona?</Text>
-                  </View>
-                  <View style={{ gap: 10 }}>
-                    {[
-                      { icon: '📌', text: 'Base: 1 ponto por questão respondida' },
-                      { icon: '🎯', text: 'Acurácia: Até 50% de bônus por taxa de acerto' },
-                      { icon: '⚡', text: 'Velocidade: Até 25% de bônus por responder rápido' },
-                    ].map((item, i) => (
-                      <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-                        <Text style={{ fontSize: 15 }}>{item.icon}</Text>
-                        <Text style={{ color: '#9BA1A6', fontSize: 12, lineHeight: 18, flex: 1 }}>{item.text}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E2328' }}>
-                  <Text style={{ color: '#ECEDEE', fontSize: 15, fontWeight: '600', marginBottom: 14 }}>Medalhas</Text>
-                  <View style={{ gap: 8 }}>
-                    {SCORE_LEVELS.map((level) => (
-                      <View key={level} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, backgroundColor: '#151718', borderRadius: 8, paddingHorizontal: 10 }}>
-                        <Text style={{ fontSize: 16 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
-                        <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '600', flex: 1 }}>{level}</Text>
-                        <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 11 }}>{SCORE_LEVEL_RANGES[level]}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
+          </>
         )}
       </ScrollView>
     );
@@ -247,6 +283,43 @@ export default function CommunityScreen() {
         </View>
       )}
 
+      {/* Cards informativos lado a lado */}
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+        {/* Como funciona */}
+        <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1E2328' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <Text style={{ fontSize: 16 }}>🏆</Text>
+            <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600' }}>Como funciona?</Text>
+          </View>
+          <View style={{ gap: 7 }}>
+            {[
+              { icon: '📌', text: '1 ponto por questão' },
+              { icon: '🎯', text: 'Bônus por acerto' },
+              { icon: '⚡', text: 'Bônus por velocidade' },
+            ].map((item, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                <Text style={{ fontSize: 12 }}>{item.icon}</Text>
+                <Text style={{ color: '#9BA1A6', fontSize: 11, lineHeight: 16, flex: 1 }}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Medalhas */}
+        <View style={{ flex: 1, backgroundColor: '#0D0F10', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1E2328' }}>
+          <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600', marginBottom: 10 }}>Medalhas</Text>
+          <View style={{ gap: 6 }}>
+            {SCORE_LEVELS.map((level) => (
+              <View key={level} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 14 }}>{SCORE_LEVEL_EMOJIS[level]}</Text>
+                <Text style={{ color: '#ECEDEE', fontSize: 11, fontWeight: '600', flex: 1 }}>{level}</Text>
+                <Text style={{ color: SCORE_LEVEL_COLORS[level], fontSize: 10 }}>{SCORE_LEVEL_RANGES[level]}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+
       {/* Users List */}
       <View className="mt-5 gap-3">
         {users.length === 0 ? (
@@ -256,80 +329,100 @@ export default function CommunityScreen() {
         ) : (
           users.map((userProfile, index) => {
             const isCurrentUser = userProfile.userId === user?.id;
+            const isExpanded = expandedUserId === userProfile.userId;
             return (
-              <View
+              <Pressable
                 key={userProfile.userId}
-                className={`flex-row items-center gap-3 rounded-xl border p-3 ${
-                  isCurrentUser
-                    ? 'border-[#F59E0B] bg-[#F59E0B]/15'
-                    : 'border-[#E6E8EB] dark:border-[#30363D]'
-                }`}>
-                {/* Rank */}
-                <View className={`h-10 w-10 items-center justify-center rounded-full ${
-                  isCurrentUser ? 'bg-[#F59E0B]' : 'bg-[#3F51B5]'
-                }`}>
-                  <Text className="text-sm font-bold text-white">#{index + 1}</Text>
-                </View>
+                onPress={() => setExpandedUserId(isExpanded ? null : userProfile.userId)}
+                style={({ pressed }) => ({
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: isCurrentUser ? 'rgba(245,158,11,0.5)' : '#30363D',
+                  backgroundColor: pressed ? '#17191C' : isCurrentUser ? 'rgba(245,158,11,0.08)' : '#151718',
+                  overflow: 'hidden',
+                })}>
+                {/* Linha principal */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
+                  {/* Rank */}
+                  <View style={{
+                    width: 40, height: 40, borderRadius: 20,
+                    backgroundColor: isCurrentUser ? '#F59E0B' : '#3F51B5',
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>#{index + 1}</Text>
+                  </View>
 
-                {/* User Info */}
-                <View className="flex-1">
-                  <Text className={`text-sm font-semibold ${
-                    isCurrentUser
-                      ? 'text-[#D97706] dark:text-[#FBBF24]'
-                      : 'text-[#11181C] dark:text-[#ECEDEE]'
-                  }`}>
-                    {userProfile.name}
-                    {isCurrentUser && (
-                      <Text className="ml-2 text-xs text-[#D97706] dark:text-[#FBBF24]"> (você)</Text>
-                    )}
-                  </Text>
-                  <View className="mt-1 flex-row flex-wrap gap-x-2 gap-y-0.5">
-                    <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">
-                      {userProfile.totalQuestionsAnswered} questões
+                  {/* User Info */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 14, fontWeight: '600',
+                      color: isCurrentUser ? '#FBBF24' : '#ECEDEE',
+                    }}>
+                      {userProfile.name}{isCurrentUser ? ' (você)' : ''}
                     </Text>
-                    <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">•</Text>
-                    <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">
-                      {userProfile.overallAccuracy}% acertos
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 3 }}>
+                      <Text style={{ fontSize: 11, color: '#9BA1A6' }}>{userProfile.totalQuestionsAnswered} questões</Text>
+                      <Text style={{ fontSize: 11, color: '#9BA1A6' }}>•</Text>
+                      <Text style={{ fontSize: 11, color: '#9BA1A6' }}>{userProfile.overallAccuracy}% acertos</Text>
+                      {userProfile.streak > 0 && (
+                        <>
+                          <Text style={{ fontSize: 11, color: '#9BA1A6' }}>•</Text>
+                          <Text style={{ fontSize: 11, color: '#F59E0B', fontWeight: '600' }}>🔥 {userProfile.streak} {userProfile.streak === 1 ? 'dia' : 'dias'}</Text>
+                        </>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Score & Medal */}
+                  <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: isCurrentUser ? '#FBBF24' : '#A5B4FC' }}>
+                        {userProfile.score}
+                      </Text>
+                      <Text style={{ fontSize: 20 }}>{SCORE_LEVEL_EMOJIS[userProfile.scoreLevel]}</Text>
+                    </View>
+                    <Text style={{ fontSize: 10, color: SCORE_LEVEL_COLORS[userProfile.scoreLevel] }}>
+                      {userProfile.scoreLevel}
                     </Text>
-                    {userProfile.streak > 0 && (
-                      <>
-                        <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">•</Text>
-                        <Text className="text-xs font-semibold text-[#F59E0B] dark:text-[#FBBF24]">
-                          🔥 {userProfile.streak} {userProfile.streak === 1 ? 'dia' : 'dias'}
-                        </Text>
-                      </>
-                    )}
                   </View>
                 </View>
 
-                {/* Score & Medal */}
-                <View className="items-end gap-2">
-                  <View className="flex-row items-center gap-2">
-                    <Text className={`text-lg font-bold ${isCurrentUser ? 'text-[#D97706] dark:text-[#FBBF24]' : 'text-[#3F51B5]'}`}>
-                      {userProfile.score}
-                    </Text>
-                    <Text className="text-2xl">
-                      {SCORE_LEVEL_EMOJIS[userProfile.scoreLevel]}
-                    </Text>
+                {/* Mini-card expandido */}
+                {isExpanded && (
+                  <View style={{ borderTopWidth: 1, borderTopColor: '#30363D', marginHorizontal: 12, marginBottom: 12, paddingTop: 10 }}>
+                    {userProfile.topCategory ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ color: '#9BA1A6', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Tema mais estudado</Text>
+                          <Text style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '700' }}>{userProfile.topCategory}</Text>
+                          {userProfile.topCategoryTrack ? (
+                            <Text style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>{userProfile.topCategoryTrack}</Text>
+                          ) : null}
+                        </View>
+                        <View style={{ alignItems: 'center', gap: 2 }}>
+                          <Text style={{ color: '#9BA1A6', fontSize: 10 }}>Acerto</Text>
+                          <Text style={{
+                            fontSize: 16, fontWeight: '800',
+                            color: (userProfile.topCategoryAccuracy ?? 0) >= 80 ? '#22C55E' : (userProfile.topCategoryAccuracy ?? 0) >= 50 ? '#F59E0B' : '#EF4444',
+                          }}>{userProfile.topCategoryAccuracy ?? 0}%</Text>
+                        </View>
+                        <View style={{ width: 1, height: 36, backgroundColor: '#30363D' }} />
+                        <View style={{ alignItems: 'center', gap: 2 }}>
+                          <Text style={{ color: '#9BA1A6', fontSize: 10 }}>Tempo/questão</Text>
+                          <Text style={{ color: '#A5B4FC', fontSize: 13, fontWeight: '700' }}>
+                            {userProfile.topCategoryAvgTimeMs ? (userProfile.topCategoryAvgTimeMs / 1000).toFixed(1) + 's' : '—'}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={{ color: '#6B7280', fontSize: 12, textAlign: 'center' }}>Sem dados de categorias disponíveis.</Text>
+                    )}
                   </View>
-                  <Text className="text-xs text-[#687076] dark:text-[#9BA1A6]">pontos</Text>
-                </View>
-              </View>
+                )}
+              </Pressable>
             );
           })
         )}
-      </View>
-
-      {/* Score Explanation */}
-      <View className="mt-8 rounded-2xl border border-[#E6E8EB] p-4 dark:border-[#30363D]">
-        <Text className="text-sm font-semibold text-[#11181C] dark:text-[#ECEDEE]">
-          Como funciona o scoring?
-        </Text>
-        <Text className="mt-2 text-xs leading-5 text-[#687076] dark:text-[#9BA1A6]">
-          {`• Base: 1 ponto por questão respondida\n`}
-          {`• Acurácia: Até 50% de bônus por taxa de acerto\n`}
-          {`• Velocidade: Até 25% de bônus por responder rápido (ideal: 20s por questão)`}
-        </Text>
       </View>
         </>
       )}

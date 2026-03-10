@@ -2,17 +2,17 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useScreenSize } from '@/hooks/use-screen-size';
 
 export default function ReadyThemeInfoScreen() {
   const router = useRouter();
   const { track, category } = useLocalSearchParams<{ track: string; category: string }>();
   const contextLabel = `Tema: ${track ?? ''} · Categoria: ${category ?? ''}`.toLocaleUpperCase('pt-BR');
-  const isDesktopWidth = useIsDesktop();
+  const { isDesktop: isDesktopWidth, isTablet: isTabletWidth } = useScreenSize();
 
   return (
     <ScrollView className="flex-1 bg-white px-5 pt-14 dark:bg-[#151718]" showsVerticalScrollIndicator={false}>
-      {isDesktopWidth && (
+      {(isDesktopWidth || isTabletWidth) && (
         <Pressable
           onPress={() => router.back()}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16, alignSelf: 'flex-start' }}>
