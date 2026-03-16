@@ -39,7 +39,7 @@ server/.env
 *.tgz
 
 # data (JSON card banks are generated / too large to track)
-data/cards/*.json
+data/cards/
 data/cards/glossary/
 
 # generated native folders
