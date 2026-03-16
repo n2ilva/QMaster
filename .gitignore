@@ -38,9 +38,9 @@ server/.env
 *.tsbuildinfo
 *.tgz
 
-# data
-cards/
-glossary/
+# data (JSON card banks are generated / too large to track)
+data/cards/*.json
+data/cards/glossary/
 
 # generated native folders
 /ios
