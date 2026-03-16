@@ -1,17 +1,20 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import Fuse from 'fuse.js';
+import { useCallback, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { ActivityIndicator, Animated, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { DesktopSidebar } from '@/components/desktop-sidebar';
+import { getCategoryTags } from '@/data/cards/category-tags';
+import { hasDocumentation } from '@/data/documentation';
 import { CATEGORY_TYPE_LABEL } from '@/data/tracks';
 import { useScreenSize } from '@/hooks/use-screen-size';
 import {
-  fetchCategoryStats,
-  getCategoriesForTrack,
-  resolveTrackLabel,
-  type CategoryStats,
+    fetchCategoryStats,
+    getCategoriesForTrack,
+    resolveTrackLabel,
+    type CategoryStats,
 } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -24,111 +27,9 @@ function CategoryCard({
   track: string;
   stats: CategoryStats | undefined;
 }) {
-  const uniqueStudied = stats?.uniqueStudied ?? 0;
-  const totalCards = stats?.totalCards ?? 0;
-  const uniqueCorrect = stats?.uniqueCorrect ?? 0;
-  const accuracy = stats?.accuracyPercent ?? 0;
-  const dueForReview = stats?.dueForReview ?? 0;
-  const hasInProgress = stats?.hasInProgressLesson ?? false;
-
-  const accentColor =
-    uniqueStudied === 0
-      ? '#9BA1A6'
-      : accuracy >= 80
-        ? '#22C55E'
-        : accuracy >= 50
-          ? '#F59E0B'
-          : '#EF4444';
-
-  const buttonLabel = hasInProgress
-    ? 'Continuar'
-    : uniqueStudied > 0
-      ? 'Estudar'
-      : 'Iniciar';
-
-  const buttonIcon = hasInProgress ? 'play-arrow' : uniqueStudied > 0 ? 'replay' : 'play-arrow';
-
-  return (
-    <View style={{ backgroundColor: accentColor, borderRadius: 14, padding: 2, overflow: 'hidden' }}>
-      <View style={{ backgroundColor: '#111316', borderRadius: 12, padding: 16 }}>
-        {/* Title */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: CATEGORY_TYPE_LABEL[cat] ? 4 : 10 }}>
-          <Text style={{ flex: 1, color: '#ECEDEE', fontSize: 15, fontWeight: '700' }}>{cat}</Text>
-          {dueForReview > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-              <MaterialIcons name="schedule" size={11} color="#1A1000" />
-              <Text style={{ color: '#1A1000', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
-            </View>
-          )}
-        </View>
-        {CATEGORY_TYPE_LABEL[cat] && (
-          <Text style={{ color: '#6B7280', fontSize: 11, marginBottom: 10 }}>{CATEGORY_TYPE_LABEL[cat]}</Text>
-        )}
-
-        {/* Stats row */}
-        <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="check-circle" size={13} color={accentColor} />
-            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
-            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-              {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="style" size={13} color="#6B7280" />
-            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
-            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-              {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
-            </Text>
-          </View>
-        </View>
-
-        {/* Accuracy bar */}
-        <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
-          <View
-            style={{
-              height: '100%',
-              borderRadius: 4,
-              width: `${uniqueStudied > 0 ? accuracy : 0}%`,
-              backgroundColor: accentColor,
-            }}
-          />
-        </View>
-
-        {/* Action button */}
-        <Link
-          href={`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`}
-          asChild>
-          <Pressable
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              backgroundColor: pressed ? '#1e2a5e22' : 'transparent',
-              borderWidth: 1,
-              borderColor: '#3F51B5',
-              borderRadius: 10,
-              paddingVertical: 10,
-            })}>
-            <MaterialIcons name={buttonIcon} size={15} color="#818CF8" />
-            <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700' }}>{buttonLabel}</Text>
-          </Pressable>
-        </Link>
-      </View>
-    </View>
-  );
-}
-
-function CategoryCardDesktop({
-  cat,
-  track,
-  stats,
-}: {
-  cat: string;
-  track: string;
-  stats: CategoryStats | undefined;
-}) {
+  const router = useRouter();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const docsScaleAnim = useRef(new Animated.Value(1)).current;
   const uniqueStudied = stats?.uniqueStudied ?? 0;
   const totalCards = stats?.totalCards ?? 0;
   const uniqueCorrect = stats?.uniqueCorrect ?? 0;
@@ -145,171 +46,184 @@ function CategoryCardDesktop({
           ? '#F59E0B'
           : '#EF4444';
 
-  const buttonLabel = hasInProgress ? 'Continuar' : uniqueStudied > 0 ? 'Estudar' : 'Iniciar';
   const buttonIcon: ComponentProps<typeof MaterialIcons>['name'] = hasInProgress ? 'play-arrow' : uniqueStudied > 0 ? 'replay' : 'play-arrow';
 
+  const hasDocs = hasDocumentation(track, cat);
+
   return (
-    <View style={{ backgroundColor: accentColor, borderRadius: 14, padding: 2, overflow: 'hidden' }}>
-      <View style={{ backgroundColor: '#111316', borderRadius: 12, padding: 16 }}>
-        {/* Linha superior: nome + badge revisão */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: CATEGORY_TYPE_LABEL[cat] ? 4 : 10 }}>
-          <Text style={{ flex: 1, color: '#ECEDEE', fontSize: 15, fontWeight: '700' }}>{cat}</Text>
-          {dueForReview > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
-              <MaterialIcons name="schedule" size={11} color="#1A1000" />
-              <Text style={{ color: '#1A1000', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
+    <Pressable
+      onPress={() => router.push(`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`)}
+      onHoverIn={() => Animated.spring(scaleAnim, { toValue: 1.03, useNativeDriver: true, tension: 300, friction: 10 }).start()}
+      onHoverOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 300, friction: 10 }).start()}
+    >
+      {({ hovered }) => (
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <View 
+            style={{ 
+              backgroundColor: hovered ? '#818CF8' : accentColor, 
+              borderRadius: 14, 
+              padding: 2, 
+              overflow: 'hidden',
+              ...(Platform.OS === 'web' && {
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+              }),
+            }}>
+            <View 
+              style={{ 
+                backgroundColor: hovered ? '#1A1D24' : '#111316', 
+                borderRadius: 12, 
+                padding: 16,
+                ...(Platform.OS === 'web' && {
+                  transition: 'background-color 0.2s ease',
+                }),
+              }}>
+              {/* Header with title and docs button */}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: CATEGORY_TYPE_LABEL[cat] ? 4 : 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: hovered ? '#FFFFFF' : '#ECEDEE', fontSize: 15, fontWeight: '700' }}>{cat}</Text>
+                </View>
+                {dueForReview > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 }}>
+                    <MaterialIcons name="schedule" size={11} color="#1A1000" />
+                    <Text style={{ color: '#1A1000', fontSize: 10, fontWeight: '700' }}>{dueForReview} p/ revisar</Text>
+                  </View>
+                )}
+                {hasDocs && (
+                  <Pressable
+                    onPress={(e) => { e.stopPropagation(); router.push(`/ready/theme-info?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`); }}
+                    onHoverIn={() => Animated.spring(docsScaleAnim, { toValue: 1.1, useNativeDriver: true, tension: 400, friction: 8 }).start()}
+                    onHoverOut={() => Animated.spring(docsScaleAnim, { toValue: 1, useNativeDriver: true, tension: 400, friction: 8 }).start()}
+                  >
+                    {({ hovered: docsHovered }) => (
+                      <Animated.View style={{ transform: [{ scale: docsScaleAnim }], zIndex: 10 }}>
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                          backgroundColor: docsHovered ? '#14B8A6' : '#6366F1',
+                          borderRadius: 8,
+                          paddingVertical: 6,
+                          paddingHorizontal: 12,
+                          ...(Platform.OS === 'web' && { transition: 'all 0.2s ease' }),
+                        }}>
+                          <MaterialIcons name="auto-stories" size={14} color="#FFFFFF" />
+                          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Docs</Text>
+                        </View>
+                      </Animated.View>
+                    )}
+                  </Pressable>
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons 
+                    name={buttonIcon} 
+                    size={18} 
+                    color={hovered ? '#818CF8' : '#6B7280'} 
+                  />
+                </View>
+              </View>
+              {CATEGORY_TYPE_LABEL[cat] && (
+                <Text style={{ color: '#6B7280', fontSize: 11, marginBottom: 10 }}>{CATEGORY_TYPE_LABEL[cat]}</Text>
+              )}
+
+              {/* Stats row */}
+              <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons name="check-circle" size={13} color={hovered ? '#818CF8' : accentColor} />
+                  <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
+                  <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+                    {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialIcons name="style" size={13} color="#6B7280" />
+                  <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
+                  <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
+                    {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Accuracy bar */}
+              <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden' }}>
+                <View
+                  style={{
+                    height: '100%',
+                    borderRadius: 4,
+                    width: `${uniqueStudied > 0 ? accuracy : 0}%`,
+                    backgroundColor: accentColor,
+                  }}
+                />
+              </View>
             </View>
-          )}
-        </View>
-        {CATEGORY_TYPE_LABEL[cat] && (
-          <Text style={{ color: '#6B7280', fontSize: 11, marginBottom: 10 }}>{CATEGORY_TYPE_LABEL[cat]}</Text>
-        )}
-
-        {/* Stats row */}
-        <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="check-circle" size={13} color={accentColor} />
-            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Acertos: </Text>
-            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-              {uniqueStudied > 0 ? `${uniqueCorrect}/${uniqueStudied} (${accuracy}%)` : '0/0 (0%)'}
-            </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name="style" size={13} color="#6B7280" />
-            <Text style={{ color: '#9BA1A6', fontSize: 12 }}>Cards: </Text>
-            <Text style={{ color: '#ECEDEE', fontSize: 12, fontWeight: '700' }}>
-              {`${Math.min(uniqueStudied, totalCards)}/${totalCards}`}
-            </Text>
-          </View>
-        </View>
-
-        {/* Barra de progresso */}
-        <View style={{ height: 4, backgroundColor: '#1E2328', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
-          <View
-            style={{
-              height: '100%',
-              borderRadius: 4,
-              width: `${uniqueStudied > 0 ? accuracy : 0}%`,
-              backgroundColor: accentColor,
-            }}
-          />
-        </View>
-
-        {/* Botão */}
-        <Link
-          href={`/ready/study?track=${encodeURIComponent(track)}&category=${encodeURIComponent(cat)}`}
-          asChild>
-          <Pressable
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              backgroundColor: pressed ? '#1e2a5e22' : 'transparent',
-              borderWidth: 1,
-              borderColor: '#3F51B5',
-              borderRadius: 10,
-              paddingVertical: 10,
-            })}>
-            <MaterialIcons name={buttonIcon} size={15} color="#818CF8" />
-            <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700' }}>{buttonLabel}</Text>
-          </Pressable>
-        </Link>
-      </View>
-    </View>
+        </Animated.View>
+      )}
+    </Pressable>
   );
 }
 
-function MasterTestButton({ track }: { track: string }) {
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(shimmerAnim, {
-        toValue: 1,
-        duration: 2500,
-        easing: Easing.linear,
-        useNativeDriver: false,
-      }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [shimmerAnim]);
-
-  const shimmerOpacity = shimmerAnim.interpolate({
-    inputRange: [0, 0.3, 0.5, 0.7, 1],
-    outputRange: [0.15, 0.4, 0.15, 0.4, 0.15],
-  });
-
-  const shimmerTranslate = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-100, 300],
-  });
+function MasterTestButton({ track, style }: { track: string; style?: object }) {
+  const router = useRouter();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   return (
-    <Link
-      href={`/ready/study?track=${encodeURIComponent(track)}&mode=master-test`}
-      asChild>
-      <Pressable className="mt-4 overflow-hidden rounded-2xl active:opacity-80"
-        style={{
-          borderWidth: 1.5,
-          borderColor: '#D4A437',
-          ...Platform.select({
-            ios: {
-              shadowColor: '#FFD700',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.35,
-              shadowRadius: 8,
-            },
-            android: { elevation: 6 },
-            default: {},
-          }),
-        }}>
-        {/* Gold background */}
-        <View style={{
-          backgroundColor: '#1A1500',
-          paddingVertical: 16,
-          paddingHorizontal: 20,
-        }}>
-          {/* Shimmer overlay */}
-          <Animated.View
+    <Pressable
+      onPress={() => router.push(`/ready/study?track=${encodeURIComponent(track)}&mode=master-test`)}
+      onHoverIn={() => {
+        Animated.spring(scaleAnim, { toValue: 1.02, useNativeDriver: true, tension: 300, friction: 10 }).start();
+      }}
+      onHoverOut={() => {
+        Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 300, friction: 10 }).start();
+      }}
+      style={style}
+    >
+      {({ hovered, pressed }) => (
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <View
             style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              width: 80,
-              backgroundColor: '#FFD700',
-              opacity: shimmerOpacity,
-              transform: [{ translateX: shimmerTranslate }],
-            }}
-            pointerEvents="none"
-          />
-
-          {/* Content */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <MaterialIcons name="emoji-events" size={22} color="#FFD700" />
-            <View>
-              <Text style={{
-                color: '#FFD700',
-                fontWeight: '800',
-                fontSize: 15,
-                letterSpacing: 1,
+              borderRadius: 14,
+              borderWidth: 2,
+              borderColor: hovered ? '#FFD700' : '#D4A437',
+              backgroundColor: pressed ? '#2A2000' : hovered ? '#1F1800' : '#151000',
+              paddingVertical: 14,
+              paddingHorizontal: 18,
+              overflow: 'hidden',
+              ...(Platform.OS === 'web' && {
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+              }),
+            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ 
+                backgroundColor: hovered ? 'rgba(255, 215, 0, 0.25)' : 'rgba(255, 215, 0, 0.15)', 
+                borderRadius: 10, 
+                padding: 8,
+                ...(Platform.OS === 'web' && { transition: 'background-color 0.2s ease' }),
               }}>
-                TESTE MASTER
-              </Text>
-              <Text style={{
-                color: '#D4A437',
-                fontSize: 11,
-                marginTop: 2,
-              }}>
-                20 questões aleatórias do tema
-              </Text>
+                <MaterialIcons name="emoji-events" size={24} color="#FFD700" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#FFD700', fontWeight: '800', fontSize: 15, letterSpacing: 1.5 }}>
+                  TESTE MASTER
+                </Text>
+                <Text style={{
+                  color: hovered ? '#FFD700' : '#B8860B',
+                  fontSize: 11,
+                  marginTop: 2,
+                  fontWeight: '500',
+                  ...(Platform.OS === 'web' && { transition: 'color 0.2s ease' }),
+                }}>
+                  20 questões aleatórias do tema
+                </Text>
+              </View>
+              <MaterialIcons name="arrow-forward" size={20} color={hovered ? '#FFD700' : '#D4A437'} />
             </View>
-            <MaterialIcons name="arrow-forward" size={18} color="#D4A437" />
           </View>
-        </View>
-      </Pressable>
-    </Link>
+        </Animated.View>
+      )}
+    </Pressable>
   );
 }
 
@@ -378,15 +292,38 @@ export default function ReadyTrackCategoriesScreen() {
     }, [loadStats]),
   );
 
+  const fuseItems = useMemo(
+    () =>
+      categories.map((cat) => ({
+        cat,
+        name: cat,
+        typeLabel: CATEGORY_TYPE_LABEL[cat] ?? '',
+        tags: getCategoryTags(track, cat).join(' '),
+      })),
+    [categories, track],
+  );
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(fuseItems, {
+        keys: ['name', 'typeLabel', 'tags'],
+        threshold: 0.35,
+        includeMatches: true,
+      }),
+    [fuseItems],
+  );
+
   const filtered = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    const list = term ? categories.filter((c) => c.toLowerCase().includes(term)) : [...categories];
+    const term = searchTerm.trim();
+    const list = term
+      ? fuse.search(term).map((r) => r.item.cat)
+      : [...categories];
     return list.sort((a, b) => {
       const aStudied = statsMap[a]?.totalAnswered ?? 0;
       const bStudied = statsMap[b]?.totalAnswered ?? 0;
       return bStudied - aStudied;
     });
-  }, [categories, searchTerm, statsMap]);
+  }, [categories, searchTerm, fuse, statsMap]);
 
   if (isDesktop || isTablet) {
     return (
@@ -420,31 +357,9 @@ export default function ReadyTrackCategoriesScreen() {
           </View>
 
           {/* Teste Master */}
-          <Link href={`/ready/study?track=${encodeURIComponent(track)}&mode=master-test`} asChild>
-            <Pressable
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? '#120f00' : '#1A1500',
-                borderWidth: 1.5,
-                borderColor: '#D4A437',
-                borderRadius: 16,
-                padding: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 16,
-                marginBottom: 24,
-              })}>
-              <MaterialIcons name="emoji-events" size={28} color="#FFD700" />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: '#FFD700', fontWeight: '800', fontSize: 15, letterSpacing: 0.8 }}>
-                  TESTE MASTER
-                </Text>
-                <Text style={{ color: '#D4A437', fontSize: 12, marginTop: 3 }}>
-                  20 questões aleatórias do tema
-                </Text>
-              </View>
-              <MaterialIcons name="arrow-forward" size={20} color="#D4A437" />
-            </Pressable>
-          </Link>
+          <View style={{ marginBottom: 12 }}>
+            <MasterTestButton track={track ?? ''} />
+          </View>
 
           {/* Busca */}
           <TextInput
@@ -455,6 +370,7 @@ export default function ReadyTrackCategoriesScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             style={{
+              marginBottom: 24,
               backgroundColor: '#0D0F10',
               borderWidth: 1,
               borderColor: '#1E2328',
@@ -463,7 +379,6 @@ export default function ReadyTrackCategoriesScreen() {
               paddingVertical: 12,
               color: '#ECEDEE',
               fontSize: 14,
-              marginBottom: 24,
             }}
           />
 
@@ -480,7 +395,7 @@ export default function ReadyTrackCategoriesScreen() {
                 (col, colIdx) => (
                   <View key={colIdx} style={{ flex: 1, gap: 12 }}>
                     {col.map((cat) => (
-                      <CategoryCardDesktop key={cat} cat={cat} track={track ?? ''} stats={statsMap[cat]} />
+                      <CategoryCard key={cat} cat={cat} track={track ?? ''} stats={statsMap[cat]} />
                     ))}
                   </View>
                 )
@@ -502,17 +417,30 @@ export default function ReadyTrackCategoriesScreen() {
         {categories.length} categorias disponíveis para estudo.
       </Text>
 
-      {/* Teste Master Button */}
-      <MasterTestButton track={track ?? ''} />
+      {/* Teste Master */}
+      <View style={{ marginTop: 16, marginBottom: 12 }}>
+        <MasterTestButton track={track ?? ''} style={{ width: '100%' }} />
+      </View>
 
+      {/* Busca */}
       <TextInput
         value={searchTerm}
         onChangeText={setSearchTerm}
-        placeholder="Pesquisar categoria"
+        placeholder="Pesquisar categoria..."
         placeholderTextColor="#9BA1A6"
         autoCapitalize="none"
         autoCorrect={false}
-        className="mt-4 rounded-xl border border-[#E6E8EB] bg-white px-3 py-2 text-[#11181C] dark:border-[#30363D] dark:bg-[#1C1F24] dark:text-[#ECEDEE]"
+        style={{
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: '#30363D',
+          backgroundColor: '#1C1F24',
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          color: '#ECEDEE',
+          fontSize: 14,
+          marginBottom: 8,
+        }}
       />
 
       {loadingCategories || loadingStats ? (
