@@ -113,37 +113,39 @@ export function ReadyTrackCategoriesScreen() {
             <Text style={{ color: QUIZ_COLORS.textFaint, fontSize: 14, marginTop: 6 }}>{categories.length} categorias disponíveis para estudo.</Text>
           </View>
 
-          <View style={{ marginBottom: 12 }}>
-            <MasterTestButton track={track ?? ''} />
+          <View style={{ width: '100%', maxWidth: 1040, alignSelf: 'center' }}>
+            <View style={{ marginBottom: 12 }}>
+              <MasterTestButton track={track ?? ''} />
+            </View>
+
+            <TextInput
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              placeholder="Pesquisar categoria..."
+              placeholderTextColor="#4B5563"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={{ marginBottom: 24, backgroundColor: QUIZ_COLORS.surfaceStrong, borderWidth: 1, borderColor: QUIZ_COLORS.borderSubtle, borderRadius: QUIZ_RADII.md, paddingHorizontal: 16, paddingVertical: 12, color: QUIZ_COLORS.textPrimary, fontSize: 14 }}
+            />
+
+            {loadingCategories || loadingStats ? (
+              <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <ActivityIndicator size="large" color={QUIZ_COLORS.accentHover} />
+              </View>
+            ) : filtered.length === 0 ? (
+              <Text style={{ color: QUIZ_COLORS.textFaint }}>Nenhuma categoria encontrada.</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                {[filtered.filter((_, index) => index % 2 === 0), filtered.filter((_, index) => index % 2 !== 0)].map((column, columnIndex) => (
+                  <View key={columnIndex} style={{ flex: 1, gap: 12 }}>
+                    {column.map((category) => (
+                      <ReadyCategoryCard key={category} category={category} track={track ?? ''} stats={statsMap[category]} />
+                    ))}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-
-          <TextInput
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            placeholder="Pesquisar categoria..."
-            placeholderTextColor="#4B5563"
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={{ marginBottom: 24, backgroundColor: QUIZ_COLORS.surfaceStrong, borderWidth: 1, borderColor: QUIZ_COLORS.borderSubtle, borderRadius: QUIZ_RADII.md, paddingHorizontal: 16, paddingVertical: 12, color: QUIZ_COLORS.textPrimary, fontSize: 14 }}
-          />
-
-          {loadingCategories || loadingStats ? (
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <ActivityIndicator size="large" color={QUIZ_COLORS.accentHover} />
-            </View>
-          ) : filtered.length === 0 ? (
-            <Text style={{ color: QUIZ_COLORS.textFaint }}>Nenhuma categoria encontrada.</Text>
-          ) : (
-            <View style={{ flexDirection: 'row', gap: 16 }}>
-              {[filtered.filter((_, index) => index % 2 === 0), filtered.filter((_, index) => index % 2 !== 0)].map((column, columnIndex) => (
-                <View key={columnIndex} style={{ flex: 1, gap: 12 }}>
-                  {column.map((category) => (
-                    <ReadyCategoryCard key={category} category={category} track={track ?? ''} stats={statsMap[category]} />
-                  ))}
-                </View>
-              ))}
-            </View>
-          )}
         </ScrollView>
       </View>
     );

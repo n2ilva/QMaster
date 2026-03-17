@@ -136,9 +136,9 @@ export function ProgressScreen() {
           <>
             <View style={{ flexDirection: 'row', gap: 14, marginBottom: 32, flexWrap: 'nowrap' }}>
               <QuizStatCard label="Lições" value={totalLessons} subtitle="Lições concluídas" icon="school" accentColor={QUIZ_COLORS.primarySoft} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={QUIZ_COLORS.borderSubtle} valueColor={QUIZ_COLORS.textPrimary} subtitleColor={QUIZ_COLORS.textFaint} style={{ flex: 1, padding: 22 }} />
-              <QuizStatCard label="Acerto" value={`${accuracy}%`} subtitle="Média de acertos" icon={accuracy >= 80 ? 'check-circle' : 'trending-down'} accentColor={accuracy >= 80 ? QUIZ_COLORS.success : QUIZ_COLORS.danger} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={accuracy >= 80 ? QUIZ_COLORS.borderSubtle : 'rgba(239,68,68,0.4)'} valueColor={accuracy >= 80 ? QUIZ_COLORS.textPrimary : QUIZ_COLORS.danger} subtitleColor={accuracy >= 80 ? QUIZ_COLORS.textFaint : QUIZ_COLORS.danger} style={{ flex: 1, padding: 22 }} />
-              <QuizStatCard label="Pontuação" value={score} subtitle="Pontos totais" emoji={SCORE_LEVEL_EMOJIS[scoreLevel]} accentColor={QUIZ_COLORS.primarySoft} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={QUIZ_COLORS.primary} valueColor={QUIZ_COLORS.textPrimary} subtitleColor={QUIZ_COLORS.textFaint} style={{ flex: 1, padding: 22 }} />
-              <QuizStatCard label="Sequência" value={streak} subtitle={streak === 1 ? 'Dia consecutivo' : 'Dias consecutivos'} emoji="🔥" accentColor={QUIZ_COLORS.warning} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={streak > 0 ? 'rgba(245,158,11,0.35)' : QUIZ_COLORS.borderSubtle} valueColor={streak > 0 ? '#FBBF24' : '#4B5563'} subtitleColor={QUIZ_COLORS.textFaint} style={{ flex: 1, padding: 22 }} />
+              <QuizStatCard label="Acerto" value={`${accuracy}%`} subtitle="Média de acertos" icon={accuracy >= 80 ? 'check-circle' : 'trending-down'} accentColor={accuracy >= 80 ? QUIZ_COLORS.success : QUIZ_COLORS.danger} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={QUIZ_COLORS.borderSubtle} valueColor={accuracy >= 80 ? QUIZ_COLORS.textPrimary : QUIZ_COLORS.danger} subtitleColor={accuracy >= 80 ? QUIZ_COLORS.textFaint : QUIZ_COLORS.danger} style={{ flex: 1, padding: 22 }} />
+              <QuizStatCard label="Pontuação" value={score} subtitle="Pontos totais" emoji={SCORE_LEVEL_EMOJIS[scoreLevel]} accentColor={QUIZ_COLORS.primarySoft} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={QUIZ_COLORS.borderSubtle} valueColor={QUIZ_COLORS.textPrimary} subtitleColor={QUIZ_COLORS.textFaint} style={{ flex: 1, padding: 22 }} />
+              <QuizStatCard label="Sequência" value={streak} subtitle={streak === 1 ? 'Dia consecutivo' : 'Dias consecutivos'} emoji="🔥" accentColor={QUIZ_COLORS.warning} backgroundColor={QUIZ_COLORS.surfaceStrong} borderColor={QUIZ_COLORS.borderSubtle} valueColor={streak > 0 ? '#FBBF24' : '#4B5563'} subtitleColor={QUIZ_COLORS.textFaint} style={{ flex: 1, padding: 22 }} />
             </View>
 
             <View style={{ backgroundColor: QUIZ_COLORS.surfaceStrong, borderRadius: 18, borderWidth: 1, borderColor: QUIZ_COLORS.borderSubtle }}>
@@ -199,8 +199,8 @@ export function ProgressScreen() {
       ) : (
         <>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
-            <QuizStatCard label="Resumo geral" value={totalLessons} subtitle={`${totalLessons === 1 ? 'lição concluída' : 'lições concluídas'} · ${accuracy}% de acerto`} accentColor="#FFFFFF" backgroundColor={QUIZ_COLORS.primary} borderColor={QUIZ_COLORS.primary} valueColor="#FFFFFF" labelColor="rgba(255,255,255,0.8)" subtitleColor="rgba(255,255,255,0.7)" style={{ flex: 1 }} size="compact" align="center" />
-            <QuizStatCard label="Medalha" value={scoreLevel} subtitle={`${score} pontos`} emoji={SCORE_LEVEL_EMOJIS[scoreLevel]} accentColor={QUIZ_COLORS.primary} backgroundColor="rgba(63,81,181,0.05)" borderColor={QUIZ_COLORS.primary} valueColor={QUIZ_COLORS.primary} subtitleColor={QUIZ_COLORS.textMuted} style={{ flex: 1 }} align="center" size="compact" />
+            <QuizStatCard label="Resumo geral" value={totalLessons} subtitle={`${totalLessons === 1 ? 'lição concluída' : 'lições concluídas'} · ${accuracy}% de acerto`} accentColor="#FFFFFF" backgroundColor={QUIZ_COLORS.primary} borderColor={QUIZ_COLORS.borderSubtle} valueColor="#FFFFFF" labelColor="rgba(255,255,255,0.8)" subtitleColor="rgba(255,255,255,0.7)" style={{ flex: 1 }} size="compact" align="center" />
+            <QuizStatCard label="Medalha" value={scoreLevel} subtitle={`${score} pontos`} emoji={SCORE_LEVEL_EMOJIS[scoreLevel]} accentColor={QUIZ_COLORS.primary} backgroundColor="rgba(63,81,181,0.05)" borderColor={QUIZ_COLORS.borderSubtle} valueColor={QUIZ_COLORS.primary} subtitleColor={QUIZ_COLORS.textMuted} style={{ flex: 1 }} align="center" size="compact" />
           </View>
 
           {streak > 0 && (
@@ -215,7 +215,7 @@ export function ProgressScreen() {
             </View>
           )}
 
-          <View className="mt-5 overflow-hidden rounded-2xl border border-[#22C55E]/20 dark:border-[#22C55E]/30">
+          <View className="mt-5 overflow-hidden rounded-2xl border border-[#E6E8EB] dark:border-[#30363D]">
             <View style={{ backgroundColor: 'rgba(34,197,94,0.08)' }} className="flex-row items-center gap-3 px-4 py-3">
               <View className="h-9 w-9 items-center justify-center rounded-full bg-[#22C55E]/15">
                 <MaterialIcons name="trending-up" size={20} color="#22C55E" />

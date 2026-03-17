@@ -12,6 +12,9 @@ type ProgressCategoryCardProps = {
   categoryProgress: CategoryProgress;
 };
 
+const PROGRESS_CARD_MIN_HEIGHT = 162;
+const PROGRESS_CARD_STATUS_AREA_HEIGHT = 34;
+
 export function ProgressCategoryCard({ categoryProgress }: ProgressCategoryCardProps) {
   const router = useRouter();
   const accuracy = categoryProgress.accuracyPercent;
@@ -21,7 +24,8 @@ export function ProgressCategoryCard({ categoryProgress }: ProgressCategoryCardP
 
   return (
     <InteractiveCard
-      accentColor={accentColor}
+      accentColor={QUIZ_COLORS.borderSubtle}
+      hoverAccentColor={QUIZ_COLORS.borderSubtle}
       onPress={() =>
         router.push(
           `/study?track=${encodeURIComponent(categoryProgress.track)}&category=${encodeURIComponent(categoryProgress.category)}`,
@@ -29,9 +33,10 @@ export function ProgressCategoryCard({ categoryProgress }: ProgressCategoryCardP
       }
       outerRadius={16}
       innerRadius={14}
-      innerPadding={14}>
+      innerPadding={14}
+      innerStyle={{ minHeight: PROGRESS_CARD_MIN_HEIGHT }}>
       {({ hovered }) => (
-        <>
+        <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
             <View style={{ backgroundColor: `${trackStyle.color}22`, borderRadius: 9, padding: 7, marginTop: 1 }}>
               <MaterialIcons name={trackStyle.icon} size={14} color={trackStyle.color} />
@@ -75,25 +80,29 @@ export function ProgressCategoryCard({ categoryProgress }: ProgressCategoryCardP
             </Text>
           </View>
 
-          {categoryProgress.hasInProgressLesson ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F59E0B22', borderWidth: 1, borderColor: '#F59E0B44', borderRadius: QUIZ_RADII.sm, paddingHorizontal: 8, paddingVertical: 5, marginTop: 8 }}>
-              <MaterialIcons name="schedule" size={12} color={QUIZ_COLORS.warning} />
-              <Text style={{ color: QUIZ_COLORS.warning, fontSize: 11, fontWeight: '600' }}>
-                Em andamento · {categoryProgress.inProgressAnswered}{' '}
-                {categoryProgress.inProgressAnswered === 1 ? 'resposta' : 'respostas'}
-              </Text>
-            </View>
-          ) : null}
+          <View style={{ flex: 1 }} />
 
-          {accuracy < 50 ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EF444422', borderWidth: 1, borderColor: '#EF444444', borderRadius: QUIZ_RADII.sm, paddingHorizontal: 8, paddingVertical: 5, marginTop: 8 }}>
-              <MaterialIcons name="warning" size={12} color={QUIZ_COLORS.danger} />
-              <Text style={{ color: QUIZ_COLORS.danger, fontSize: 11, fontWeight: '600' }}>
-                Taxa baixa — revise este tema
-              </Text>
-            </View>
-          ) : null}
-        </>
+          <View style={{ minHeight: PROGRESS_CARD_STATUS_AREA_HEIGHT, justifyContent: 'flex-end', gap: 8, paddingTop: 8 }}>
+            {categoryProgress.hasInProgressLesson ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F59E0B22', borderWidth: 1, borderColor: '#F59E0B44', borderRadius: QUIZ_RADII.sm, paddingHorizontal: 8, paddingVertical: 5 }}>
+                <MaterialIcons name="schedule" size={12} color={QUIZ_COLORS.warning} />
+                <Text style={{ color: QUIZ_COLORS.warning, fontSize: 11, fontWeight: '600' }}>
+                  Em andamento · {categoryProgress.inProgressAnswered}{' '}
+                  {categoryProgress.inProgressAnswered === 1 ? 'resposta' : 'respostas'}
+                </Text>
+              </View>
+            ) : null}
+
+            {accuracy < 50 ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EF444422', borderWidth: 1, borderColor: '#EF444444', borderRadius: QUIZ_RADII.sm, paddingHorizontal: 8, paddingVertical: 5 }}>
+                <MaterialIcons name="warning" size={12} color={QUIZ_COLORS.danger} />
+                <Text style={{ color: QUIZ_COLORS.danger, fontSize: 11, fontWeight: '600' }}>
+                  Taxa baixa — revise este tema
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
       )}
     </InteractiveCard>
   );

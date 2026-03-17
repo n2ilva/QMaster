@@ -5,6 +5,7 @@ import { QUIZ_COLORS } from '@/constants/quiz-ui';
 
 type InteractiveCardProps = {
   accentColor: string;
+  hoverAccentColor?: string;
   children: ReactNode | ((state: { hovered: boolean; pressed: boolean }) => ReactNode);
   onPress?: PressableProps['onPress'];
   outerRadius?: number;
@@ -17,6 +18,7 @@ type InteractiveCardProps = {
 
 export function InteractiveCard({
   accentColor,
+  hoverAccentColor,
   children,
   onPress,
   outerRadius = 14,
@@ -66,7 +68,7 @@ export function InteractiveCard({
         <Animated.View style={[style, { transform: [{ scale: scaleAnim }] }]}> 
           <View
             style={{
-              backgroundColor: hovered ? QUIZ_COLORS.accentHover : accentColor,
+              backgroundColor: hovered ? (hoverAccentColor ?? QUIZ_COLORS.accentHover) : accentColor,
               borderRadius: outerRadius,
               padding: 2,
               overflow: 'hidden',

@@ -3,9 +3,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { DesktopSidebar } from '@/components/desktop-sidebar';
 import { QuizActionButton } from '@/components/quiz/action-button';
 import { getCategoryDocumentation } from '@/data/documentation';
 import { useLayoutMode } from '@/hooks/use-layout-mode';
+import { useLogout } from '@/hooks/use-logout';
 import { buildStudyRoute, parseStudyIndex, parseStudySequence } from '@/lib/study-flow';
 
 import { FormattedContent } from './components/formatted-content';
@@ -21,6 +23,7 @@ export function ThemeInfoScreen() {
   }>();
   const layoutMode = useLayoutMode();
   const isDesktopLayout = layoutMode === 'desktop';
+  const { handleLogout } = useLogout();
 
   const decodedTrack = useMemo(() => decodeURIComponent(track ?? ''), [track]);
   const decodedCategory = useMemo(() => decodeURIComponent(category ?? ''), [category]);
@@ -49,13 +52,15 @@ export function ThemeInfoScreen() {
     router.push(studyHref as never);
   };
 
-  return (
-    <ScrollView className="flex-1 bg-white dark:bg-[#0A0C0E]" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: isDesktopLayout ? 32 : 20, paddingTop: isDesktopLayout ? 32 : 56, paddingBottom: 100 }}>
-      <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20, alignSelf: 'flex-start', backgroundColor: '#1E293B', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
-        <MaterialIcons name="arrow-back" size={16} color="#94A3B8" />
-        <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500' }}>Voltar</Text>
-      </Pressable>
+  const backButton = (
+    <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 24, alignSelf: 'flex-start' }}>
+      <MaterialIcons name="arrow-back" size={18} color="#64748B" />
+      <Text style={{ color: '#64748B', fontSize: 14 }}>Voltar para Categorias</Text>
+    </Pressable>
+  );
 
+  const content = (
+    <>
       {doc ? (
         <>
           <View style={{ backgroundColor: '#111827', borderRadius: 20, padding: 24, marginBottom: 24, borderWidth: 1, borderColor: '#1F2937' }}>
@@ -135,6 +140,28 @@ export function ThemeInfoScreen() {
           </View>
         </View>
       )}
+    </>
+  );
+
+  if (isDesktopLayout) {
+    return (
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#0D0F10' }}>
+        <DesktopSidebar onLogout={() => void handleLogout()} />
+        <ScrollView
+          style={{ flex: 1, backgroundColor: '#111316' }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 32, paddingTop: 32, paddingBottom: 100 }}>
+          {backButton}
+          <View style={{ width: '100%', maxWidth: 1040, alignSelf: 'center' }}>{content}</View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView className="flex-1 bg-white dark:bg-[#0A0C0E]" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 100 }}>
+      {backButton}
+      {content}
     </ScrollView>
   );
 }

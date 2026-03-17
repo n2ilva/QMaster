@@ -23,6 +23,7 @@ export function QuizTrackCard({ item, height = 80, fontSize = 16 }: QuizTrackCar
   return (
     <InteractiveCard
       accentColor={item.color}
+      hoverAccentColor={item.color}
       onPress={() => router.push(`/track/${encodeURIComponent(item.key)}`)}
       outerRadius={14}
       innerRadius={12}
