@@ -56,17 +56,17 @@ export function PuzzlePiece({
           style={{
             alignItems: 'center',
             justifyContent: 'center',
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            borderRadius: 10,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            borderRadius: 8,
             borderStyle: 'solid',
             backgroundColor: used ? 'transparent' : colors.bg,
-            borderWidth: 2,
+            borderWidth: 1.5,
             borderColor: used ? '#1A1D21' : colors.border,
-            borderBottomWidth: used ? 2 : 4,
+            borderBottomWidth: used ? 1.5 : 3,
             opacity: used ? 0.3 : 1,
-            minWidth: 36,
-            minHeight: 40,
+            minWidth: 32,
+            minHeight: 34,
             ...(Platform.OS === 'web' && !used && {
               cursor: 'pointer',
             } as any),
@@ -75,10 +75,10 @@ export function PuzzlePiece({
           <Text
             style={{
               color: used ? '#4B5563' : colors.text,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: '700',
               fontFamily: 'monospace',
-              letterSpacing: 0.2,
+              letterSpacing: 0.1,
             }}
           >
             {displayLabel}
@@ -105,42 +105,29 @@ export function PuzzlePiece({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 14,
-          paddingVertical: 8,
-          borderRadius: 10,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 8,
           borderStyle: 'solid',
-          borderWidth: 2,
-          borderBottomWidth: 4,
+          borderWidth: 1.5,
+          borderBottomWidth: 3,
           backgroundColor: colors.bg,
           borderColor: colors.border,
-          gap: 5,
-          minHeight: 36,
+          minHeight: 30,
         }}
       >
         <Text
           style={{
             color: colors.text,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight:
               token.category === 'keyword' || token.category === 'modifier' ? '700' : '600',
             fontFamily: 'monospace',
-            letterSpacing: 0.2,
+            letterSpacing: 0.1,
           }}
         >
           {displayLabel}
         </Text>
-        {showRemove && (
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              onRemove?.();
-            }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{ opacity: 0.8 }}
-          >
-            <MaterialIcons name="close" size={12} color={colors.text} />
-          </TouchableOpacity>
-        )}
       </TouchableOpacity>
       {renderModal()}
     </>

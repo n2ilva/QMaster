@@ -486,7 +486,7 @@ export function AnswerArea({
           style={{
             flexDirection: 'row',
             flexWrap: 'wrap',
-            gap: 8,
+            gap: 4,
             minHeight: 48,
             alignContent: 'flex-start',
           }}
@@ -521,8 +521,6 @@ export function AnswerArea({
                   token={token}
                   customLabel={p.customLabel}
                   variant="answer"
-                  showRemove
-                  onRemove={() => onRemove(p.instanceId)}
                   onPress={() => onRemove(p.instanceId)}
                   onRename={(newLabel) => onRename(p.instanceId, newLabel)}
                 />
@@ -595,16 +593,37 @@ export function AnswerArea({
 const SYMBOL_CATEGORIES = new Set(['symbol', 'operator']);
 
 type TokenKeyboardProps = {
-  tokens: SyntaxToken[];
-  onAddToken: (token: SyntaxToken) => void;
+  pool: PlacedToken[];
+  allTokens: SyntaxToken[];
+  onAddToken: (instanceId: string) => void;
+  onAddNewline: () => void;
 };
 
-export function TokenKeyboard({ tokens, onAddToken }: TokenKeyboardProps) {
-  // Split into symbols (first row) and words (remaining rows)
-  const symbols = tokens.filter((t) => SYMBOL_CATEGORIES.has(t.category));
-  const words = [...tokens.filter((t) => !SYMBOL_CATEGORIES.has(t.category))].sort((a, b) =>
-    a.label.toLowerCase().localeCompare(b.label.toLowerCase()),
-  );
+export function TokenKeyboard({ pool, allTokens, onAddToken, onAddNewline }: TokenKeyboardProps) {
+  const tokenMap = new Map(allTokens.map((t) => [t.id, t]));
+
+  // Split into symbols (first row) and words (remaining rows) using the instances in the pool
+  const symbolInstances = pool
+    .filter((p) => {
+      const t = tokenMap.get(p.tokenId);
+      return t && SYMBOL_CATEGORIES.has(t.category);
+    })
+    .sort((a, b) => {
+      const idxA = allTokens.findIndex((t) => t.id === a.tokenId);
+      const idxB = allTokens.findIndex((t) => t.id === b.tokenId);
+      return idxA - idxB;
+    });
+
+  const wordInstances = pool
+    .filter((p) => {
+      const t = tokenMap.get(p.tokenId);
+      return t && !SYMBOL_CATEGORIES.has(t.category);
+    })
+    .sort((a, b) => {
+      const la = tokenMap.get(a.tokenId)?.label.toLowerCase() || '';
+      const lb = tokenMap.get(b.tokenId)?.label.toLowerCase() || '';
+      return la.localeCompare(lb);
+    });
 
   return (
     <View
@@ -618,24 +637,29 @@ export function TokenKeyboard({ tokens, onAddToken }: TokenKeyboardProps) {
       }}
     >
       {/* Row 1: Symbols */}
-      {symbols.length > 0 && (
+      {symbolInstances.length > 0 && (
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'center',
+            flexWrap: 'wrap',
             gap: 6,
             paddingHorizontal: 6,
             marginBottom: 8,
           }}
         >
-          {symbols.map((token) => (
-            <PuzzlePiece
-              key={token.id}
-              token={token}
-              variant="key"
-              onPress={() => onAddToken(token)}
-            />
-          ))}
+          {symbolInstances.map((p) => {
+            const token = tokenMap.get(p.tokenId);
+            if (!token) return null;
+            return (
+              <PuzzlePiece
+                key={p.instanceId}
+                token={token}
+                variant="key"
+                onPress={() => onAddToken(p.instanceId)}
+              />
+            );
+          })}
         </View>
       )}
 
@@ -649,14 +673,18 @@ export function TokenKeyboard({ tokens, onAddToken }: TokenKeyboardProps) {
           paddingHorizontal: 6,
         }}
       >
-        {words.map((token) => (
-          <PuzzlePiece
-            key={token.id}
-            token={token}
-            variant="key"
-            onPress={() => onAddToken(token)}
-          />
-        ))}
+        {wordInstances.map((p) => {
+          const token = tokenMap.get(p.tokenId);
+          if (!token) return null;
+          return (
+            <PuzzlePiece
+              key={p.instanceId}
+              token={token}
+              variant="key"
+              onPress={() => onAddToken(p.instanceId)}
+            />
+          );
+        })}
       </View>
 
       {/* Row 3: Action keys (Enter) */}
@@ -671,7 +699,7 @@ export function TokenKeyboard({ tokens, onAddToken }: TokenKeyboardProps) {
       >
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => onAddToken({ id: 'sym_newline', label: '↵', category: 'symbol' })}
+          onPress={onAddNewline}
           style={{
             backgroundColor: '#3B82F6',
             paddingHorizontal: 22,

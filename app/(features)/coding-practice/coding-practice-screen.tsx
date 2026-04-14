@@ -51,10 +51,30 @@ export function CodingPracticeScreen() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const [placed, setPlaced] = useState<PlacedToken[]>([]);
+  const [pool, setPool] = useState<PlacedToken[]>([]);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hintIndex, setHintIndex] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+
+  const initPool = useCallback((ex: Exercise) => {
+    const newPool: PlacedToken[] = [];
+    const tokensNeeded = ex.solution;
+    const availableIds = ex.availableTokenIds;
+    
+    availableIds.forEach(id => {
+      // Find how many times this token ID is needed in the solution
+      const countInSolution = tokensNeeded.filter(sid => sid === id).length;
+      // We provide at least 1 (if it's a distractor) or as many as needed
+      const countToPool = Math.max(1, countInSolution);
+      
+      for (let i = 0; i < countToPool; i++) {
+        newPool.push({ instanceId: uid(), tokenId: id });
+      }
+    });
+    
+    setPool(newPool);
+  }, []);
 
   const playSound = async (type: 'concluido' | 'erro') => {
     try {
@@ -116,14 +136,16 @@ export function CodingPracticeScreen() {
   const handleSelectExercise = useCallback((ex: Exercise) => {
     setActiveExercise(ex);
     setPlaced([]);
+    initPool(ex);
     setIsCorrect(null);
     setHintIndex(0);
     setStartTime(Date.now());
-  }, []);
+  }, [initPool]);
 
   const handleBack = useCallback(() => {
     setActiveExercise(null);
     setPlaced([]);
+    setPool([]);
     setIsCorrect(null);
     setHintIndex(0);
     setStartTime(null);
@@ -131,18 +153,37 @@ export function CodingPracticeScreen() {
 
   const handleRestartExercise = useCallback(() => {
     setPlaced([]);
+    if (activeExercise) initPool(activeExercise);
     setIsCorrect(null);
     setHintIndex(0);
     setStartTime(Date.now());
+  }, [activeExercise, initPool]);
+
+  const handleAddToken = useCallback((instanceId: string) => {
+    setPool((prevPool) => {
+      const token = prevPool.find((p) => p.instanceId === instanceId);
+      if (!token) return prevPool;
+      setPlaced((prevPlaced) => [...prevPlaced, token]);
+      return prevPool.filter((p) => p.instanceId !== instanceId);
+    });
+    setIsCorrect(null);
   }, []);
 
-  const handleAddToken = useCallback((token: { id: string }) => {
-    setPlaced((prev) => [...prev, { instanceId: uid(), tokenId: token.id }]);
+  const handleAddNewline = useCallback(() => {
+    setPlaced((prev) => [...prev, { instanceId: uid(), tokenId: 'sym_newline' }]);
     setIsCorrect(null);
   }, []);
 
   const handleRemove = useCallback((instanceId: string) => {
-    setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId));
+    setPlaced((prev) => {
+      const token = prev.find((p) => p.instanceId === instanceId);
+      if (!token) return prev;
+      
+      if (token.tokenId !== 'sym_newline') {
+        setPool((prevPool) => [...prevPool, token]);
+      }
+      return prev.filter((p) => p.instanceId !== instanceId);
+    });
     setIsCorrect(null);
   }, []);
 
@@ -153,9 +194,13 @@ export function CodingPracticeScreen() {
   }, []);
 
   const handleClear = useCallback(() => {
+    setPool((prevPool) => {
+      const toReturn = placed.filter((p) => p.tokenId !== 'sym_newline');
+      return [...prevPool, ...toReturn];
+    });
     setPlaced([]);
     setIsCorrect(null);
-  }, []);
+  }, [placed]);
 
   const handleValidate = useCallback(async () => {
     if (!activeExercise || placed.length === 0) return;
@@ -433,8 +478,10 @@ export function CodingPracticeScreen() {
             <View>
               {/* ③ Teclado de peças — fixo, sempre visível */}
               <TokenKeyboard
-                tokens={availableTokens}
+                pool={pool}
+                allTokens={availableTokens}
                 onAddToken={handleAddToken}
+                onAddNewline={handleAddNewline}
               />
 
               {/* ④ Botão verificar */}

@@ -123,7 +123,7 @@
       "description": "Declare uma constante contendo um array com dois textos (strings).",
       "language": "javascript",
       "difficulty": "iniciante",
-      "exerciseType": "Variável",
+      "exerciseType": "Arrey",
       "availableTokenIds": [
         "kw_const",
         "id_varname",

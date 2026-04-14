@@ -14,7 +14,7 @@ export type Difficulty = 'iniciante' | 'intermediário' | 'avançado';
 export type ExerciseType =
   | 'Classe'
   | 'Função'
-  | 'Variável'
+  | 'Arrey'
   | 'Método'
   | 'Namespace'
   | 'Interface'
