@@ -19,16 +19,33 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; color: strin
   avançado:        { label: 'Avançado',       color: '#EF4444', bg: '#2D0000' },
 };
 
-export const EXERCISE_TYPE_ICONS: Record<ExerciseType, string> = {
-  Classe:      'account-balance',
-  Função:      'functions',
-  Array:       'data-object',
-  Objeto:      'data-object',
-  Método:      'auto-fix-high',
-  Namespace:   'folder',
-  Interface:   'integration-instructions',
-  Loop:        'loop',
-  Condicional: 'alt-route',
+export const EXERCISE_TYPE_ICONS: Record<string, string> = {
+  Classe:            'account-balance',
+  Função:            'functions',
+  Array:             'data-object',
+  Objeto:            'data-object',
+  Método:            'auto-fix-high',
+  Namespace:         'folder',
+  Interface:         'integration-instructions',
+  Loop:              'loop',
+  Condicional:       'alt-route',
+  // Java / C# types
+  Sintaxe:           'code',
+  Variáveis:         'text-fields',
+  'Controle de Fluxo': 'alt-route',
+  Arrays:            'view-list',
+  Classes:           'account-balance',
+  Métodos:           'functions',
+  POO:               'category',
+  Collections:       'list-alt',
+  Exceções:          'error-outline',
+  Strings:           'text-format',
+  Operadores:        'calculate',
+  Estrutura:         'folder-open',
+  LINQ:              'filter-list',
+  Assincronismo:     'sync',
+  Tipos:             'label',
+  Recursos:          'memory',
 };
 
 export const CATEGORY_COLORS: Record<string, string> = {
@@ -40,6 +57,23 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Interface: '#06B6D4',
   Loop: '#EF4444',
   Condicional: '#F97316',
+  // Java / C# types
+  Sintaxe: '#6366F1',
+  Variáveis: '#F59E0B',
+  'Controle de Fluxo': '#F97316',
+  Arrays: '#14B8A6',
+  Classes: '#3B82F6',
+  Métodos: '#8B5CF6',
+  POO: '#A855F7',
+  Collections: '#06B6D4',
+  Exceções: '#EF4444',
+  Strings: '#84CC16',
+  Operadores: '#F472B6',
+  Estrutura: '#EC4899',
+  LINQ: '#22D3EE',
+  Assincronismo: '#818CF8',
+  Tipos: '#FB923C',
+  Recursos: '#34D399',
 };
 
 // ─────────────────────────────────────────────
@@ -656,6 +690,7 @@ export function TokenKeyboard({ pool, allTokens, onAddToken, onAddNewline }: Tok
               <PuzzlePiece
                 key={p.instanceId}
                 token={token}
+                customLabel={p.customLabel}
                 variant="key"
                 onPress={() => onAddToken(p.instanceId)}
               />
@@ -681,6 +716,7 @@ export function TokenKeyboard({ pool, allTokens, onAddToken, onAddNewline }: Tok
             <PuzzlePiece
               key={p.instanceId}
               token={token}
+              customLabel={p.customLabel}
               variant="key"
               onPress={() => onAddToken(p.instanceId)}
             />

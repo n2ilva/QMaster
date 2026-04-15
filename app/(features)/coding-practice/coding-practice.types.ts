@@ -1,4 +1,4 @@
-export type Language = 'javascript' | 'java' | 'csharp';
+export type Language = 'javascript' | 'java' | 'csharp' | 'python' | 'typescript';
 
 export type TokenCategory =
   | 'keyword'
@@ -20,7 +20,31 @@ export type ExerciseType =
   | 'Interface'
   | 'Loop'
   | 'Condicional'
-  | 'Objeto';
+  | 'Objeto'
+  // Java / C# types
+  | 'Sintaxe'
+  | 'Variáveis'
+  | 'Controle de Fluxo'
+  | 'Arrays'
+  | 'Classes'
+  | 'Métodos'
+  | 'POO'
+  | 'Collections'
+  | 'Exceções'
+  | 'Strings'
+  | 'Operadores'
+  | 'Estrutura'
+  | 'LINQ'
+  | 'Assincronismo'
+  | 'Tipos'
+  | 'Recursos'
+  // Python / TypeScript types
+  | 'Listas'
+  | 'Dicionários'
+  | 'Módulos'
+  | 'Tipagem'
+  | 'Arquivos'
+  | 'Generics';
 
 export type SyntaxToken = {
   id: string;
@@ -42,6 +66,11 @@ export type Exercise = {
   /** The ordered list of token IDs that form the correct solution */
   solution: string[];
   hints?: string[];
+  /**
+   * Per-exercise label overrides for editable tokens.
+   * e.g. { "id_funcname": "saudacao", "id_param": "nome" }
+   */
+  tokenLabels?: Record<string, string>;
 };
 
 export type PlacedToken = {

@@ -13,10 +13,18 @@ import {
 } from './coding-practice.constants';
 import { type Exercise, type Language, type PlacedToken } from './coding-practice.types';
 
-// JSON data source — exercises loaded from file (swappable for API later)
+// JSON data source — exercises loaded from separate files per language
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const exercisesData = require('./data/exercises.json') as { exercises: Exercise[] };
-const ALL_EXERCISES: Exercise[] = exercisesData.exercises;
+const jsExercises = require('./data/exjavascript.json') as { exercises: Exercise[] };
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const javaExercises = require('./data/exjava.json') as { exercises: Exercise[] };
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const csharpExercises = require('./data/excsharp.json') as { exercises: Exercise[] };
+const ALL_EXERCISES: Exercise[] = [
+  ...jsExercises.exercises,
+  ...javaExercises.exercises,
+  ...csharpExercises.exercises,
+];
 import {
   AnswerArea,
   CategoryGridCard,
@@ -68,8 +76,11 @@ export function CodingPracticeScreen() {
       // We provide at least 1 (if it's a distractor) or as many as needed
       const countToPool = Math.max(1, countInSolution);
       
+      // Apply exercise-specific label if defined
+      const customLabel = ex.tokenLabels?.[id];
+      
       for (let i = 0; i < countToPool; i++) {
-        newPool.push({ instanceId: uid(), tokenId: id });
+        newPool.push({ instanceId: uid(), tokenId: id, customLabel });
       }
     });
     
