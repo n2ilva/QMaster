@@ -51,8 +51,8 @@ export function ProgressScreen() {
     return codingLangProgress.reduce((acc, curr) => acc + (curr.completed || 0), 0);
   }, [codingLangProgress]);
 
-  const ModernSection = ({ title, subtitle, icon, iconColor, count, children }: any) => (
-    <View style={{
+  const ModernSection = ({ title, subtitle, icon, iconColor, count, children, style }: any) => (
+    <View style={[{
       backgroundColor: isDark ? '#1C1F24' : '#FFFFFF',
       borderRadius: 24,
       borderWidth: 1,
@@ -64,7 +64,7 @@ export function ProgressScreen() {
       shadowOpacity: isDark ? 0.2 : 0.03,
       shadowRadius: 12,
       elevation: 2,
-    }}>
+    }, style]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 20, paddingBottom: 12 }}>
         <View style={{ 
           width: 42, 
@@ -221,7 +221,19 @@ export function ProgressScreen() {
             <ModernSection title="Progresso Quebra-Cabeça" subtitle="Por linguagem" icon="extension" iconColor="#818CF8">
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
                 {codingLangProgress.filter(s => s.completed > 0).map((stat) => (
-                  <Pressable key={stat.id} style={{ width: categoryItemWidth, backgroundColor: isDark ? '#1C1F24' : '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: isDark ? '#30363D' : '#E2E8F0' }}>
+                  <Pressable 
+                    key={stat.id} 
+                    onPress={() => router.push(`/coding-practice?lang=${stat.id}`)}
+                    style={({ pressed }) => ({ 
+                      width: categoryItemWidth, 
+                      backgroundColor: isDark ? (pressed ? '#22252A' : '#1C1F24') : (pressed ? '#F8FAFC' : '#FFFFFF'), 
+                      borderRadius: 16, 
+                      padding: 16, 
+                      borderWidth: 1, 
+                      borderColor: isDark ? '#30363D' : '#E2E8F0',
+                      opacity: pressed ? 0.9 : 1
+                    })}
+                  >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                       <MaterialIcons name="extension" size={16} color={stat.percent === 100 ? "#22C55E" : "#818CF8"} />
                       <Text style={{ color: textPrimary, fontSize: 14, fontWeight: '800', flex: 1 }}>{stat.label}</Text>
@@ -255,7 +267,7 @@ export function ProgressScreen() {
         <ActivityIndicator style={{ marginTop: 40 }} color="#818CF8" />
       ) : (
         <>
-          <View style={{ gap: 12, marginTop: 24 }}>
+          <View style={{ gap: 12, marginTop: 24, marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <ModernStatCard label="Quiz" value={totalLessons} color={QUIZ_COLORS.primary} />
               <ModernStatCard label="Código" value={totalCodingExercises} color="#818CF8" />
@@ -266,7 +278,7 @@ export function ProgressScreen() {
             </View>
           </View>
 
-          <ModernSection title="Progresso Quiz" icon="quiz" iconColor="#22C55E" style={{ marginTop: 24 }}>
+          <ModernSection title="Progresso Quiz" icon="quiz" iconColor="#22C55E">
             {categories.map((c, i) => (
               <View key={c.category}>
                 {i > 0 && <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#F1F5F9', marginVertical: 12 }} />}
@@ -277,15 +289,26 @@ export function ProgressScreen() {
 
           <ModernSection title="Quebra-Cabeça" icon="extension" iconColor="#818CF8">
             {codingLangProgress.filter(s => s.completed > 0).map((s, i) => (
-              <View key={s.id} style={{ marginBottom: 12 }}>
+              <Pressable 
+                key={s.id} 
+                onPress={() => router.push(`/coding-practice?lang=${s.id}`)}
+                style={({ pressed }) => ({ 
+                  marginBottom: 12,
+                  opacity: pressed ? 0.6 : 1
+                })}
+              >
+                {i > 0 && <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#F1F5F9', marginVertical: 12, opacity: 0.5 }} />}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={{ color: textPrimary, fontWeight: '700' }}>{s.label}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <MaterialIcons name="extension" size={14} color="#818CF8" />
+                    <Text style={{ color: textPrimary, fontWeight: '700' }}>{s.label}</Text>
+                  </View>
                   <Text style={{ color: textPrimary }}>{Math.round(s.percent)}%</Text>
                 </View>
                 <View style={{ height: 6, backgroundColor: isDark ? '#2D3139' : '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: `${s.percent}%`, backgroundColor: '#818CF8' }} />
+                  <View style={{ height: '100%', width: `${s.percent}%`, backgroundColor: s.percent === 100 ? '#22C55E' : '#818CF8' }} />
                 </View>
-              </View>
+              </Pressable>
             ))}
           </ModernSection>
         </>
