@@ -9,5 +9,7 @@ export * from "./glossary";
 export * from "./lessons";
 export * from "./progress";
 export * from "./coding-practice";
+export * from "./quick-response";
 export * from "./types";
+
 

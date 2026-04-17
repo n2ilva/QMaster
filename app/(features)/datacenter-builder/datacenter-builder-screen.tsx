@@ -14,11 +14,15 @@ import {
   Modal,
   Pressable
 } from 'react-native';
+import { Audio } from 'expo-av';
 import { router } from 'expo-router';
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 import { useTabContentPadding, useTopContentPadding } from '@/hooks/use-tab-content-padding';
 import { StudyCompletionOverlay } from '../study-session/components/study-completion-overlay';
 import { QuizStatCard } from '@/components/quiz/stat-card';
 import { QUIZ_COLORS } from '@/constants/quiz-ui';
+import { useAuth } from '@/providers/auth-provider';
+import { saveDataCenterResult, fetchDataCenterProgress } from '@/lib/api/datacenter';
 
 import RackData from '../coding-practice/Data/datacenterbuild.json';
 import { 
@@ -203,17 +207,29 @@ const DeviceRow = ({
             <Text style={styles.deviceName}>{device.id.toUpperCase()}</Text>
           </View>
           <View style={styles.ledsContainer}>
-            <View style={[
+            <Animated.View style={[
               styles.led, 
               diag === 'green' && styles.ledActiveGreen,
-              diag === 'orange' && styles.ledActiveOrange,
-              diag === 'red' && styles.ledActiveRed
+              diag === 'orange' && { 
+                backgroundColor: '#F59E0B',
+                opacity: diag === 'orange' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.4] }) : 1
+              },
+              diag === 'red' && {
+                backgroundColor: '#EF4444',
+                opacity: diag === 'red' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1
+              }
             ]} />
-            <View style={[
+             <Animated.View style={[
               styles.led, 
               diag === 'green' && styles.ledActiveGreen,
-              diag === 'orange' && styles.ledActiveOrange,
-              diag === 'red' && styles.ledActiveRed
+              diag === 'orange' && { 
+                backgroundColor: '#F59E0B',
+                opacity: diag === 'orange' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.4] }) : 1
+              },
+              diag === 'red' && {
+                backgroundColor: '#EF4444',
+                opacity: diag === 'red' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1
+              }
             ]} />
             <View style={styles.led} />
           </View>
@@ -254,11 +270,13 @@ export function DataCenterBuilderScreen() {
   const topPadding = useTopContentPadding();
   const bottomPadding = useTabContentPadding();
 
+  const { user } = useAuth();
   const [activeLevel, setActiveLevel] = useState<DataCenterLevel | null>(null);
   const [selectedCable, setSelectedCable] = useState<Cable | null>(null);
   const [sourceNode, setSourceNode] = useState<{ deviceId: string; port: string } | null>(null);
   const [connections, setConnections] = useState<ActiveConnection[]>([]);
   const [completedLevels, setCompletedLevels] = useState<Set<number>>(new Set());
+  const [movements, setMovements] = useState(0);
   
   // Game Flow States
   const [installedDevices, setInstalledDevices] = useState<Record<number, InventoryDevice>>({});
@@ -268,6 +286,10 @@ export function DataCenterBuilderScreen() {
   const [blinkingPorts, setBlinkingPorts] = useState<Record<string, 'success' | 'error'>>({});
   const [selectedSlotForInstall, setSelectedSlotForInstall] = useState<number | null>(null);
   const [showCableMenu, setShowCableMenu] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showSuccessTransition, setShowSuccessTransition] = useState(false);
+  const successScale = useRef(new Animated.Value(0)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
   
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -281,6 +303,23 @@ export function DataCenterBuilderScreen() {
 
   const blinkAnim = useRef(new Animated.Value(0)).current;
 
+  const playSound = async (type: 'success' | 'complete' | 'error') => {
+    try {
+      const soundFile = type === 'complete' ? require('@/assets/songs/concluido.mp3') : 
+                        type === 'success' ? require('@/assets/songs/acertou.mp3') : 
+                        require('@/assets/songs/erro.mp3');
+      const { sound } = await Audio.Sound.createAsync(soundFile);
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate(status => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.log('Erro ao tocar som:', error);
+    }
+  };
+
   // Visual Assets for Completion
   const completionRingScale = useRef(new Animated.Value(0.8)).current;
   const completionRingOpacity = useRef(new Animated.Value(0)).current;
@@ -292,11 +331,24 @@ export function DataCenterBuilderScreen() {
   const textPrimary = isDark ? '#ECEDEE' : '#11181C';
   const textMuted = isDark ? '#9BA1A6' : '#687076';
   const surfaceColor = isDark ? '#1A1D21' : '#FFFFFF';
+  const borderColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
 
   const isHardwareInstalled = useMemo(() => {
     if (!activeLevel) return false;
     return Object.keys(installedDevices).length === activeLevel.inventory.length;
   }, [installedDevices, activeLevel]);
+
+  useEffect(() => {
+    if (user?.id) {
+       fetchDataCenterProgress(user.id).then(results => {
+          const done = new Set<number>();
+          Object.keys(results).forEach(id => {
+             if (results[id].completed) done.add(parseInt(id));
+          });
+          setCompletedLevels(done);
+       });
+    }
+  }, [user]);
 
   const handleLevelSelect = (level: DataCenterLevel) => {
     setActiveLevel(level);
@@ -307,6 +359,7 @@ export function DataCenterBuilderScreen() {
     setInventory([...level.inventory]);
     setStartTime(Date.now());
     setFinished(false);
+    setMovements(0);
   };
 
   const triggerBlinkSlot = (slotIndex: number, type: 'success' | 'error') => {
@@ -336,10 +389,9 @@ export function DataCenterBuilderScreen() {
   const handleInstallItem = (device: InventoryDevice) => {
     if (selectedSlotForInstall === null || !activeLevel) return;
 
-    // Now allowing any hardware to be installed for trial-and-error gameplay
     setInstalledDevices(prev => ({ ...prev, [selectedSlotForInstall]: device }));
     setInventory(prev => prev.filter(d => d.id !== device.id));
-    triggerBlinkSlot(selectedSlotForInstall, 'success');
+    setMovements(m => m + 1);
     setSelectedSlotForInstall(null);
   };
 
@@ -390,6 +442,7 @@ export function DataCenterBuilderScreen() {
     triggerBlinkPort(fromKey, toKey, 'success');
     setSourceNode(null);
     setSelectedCable(null);
+    setMovements(m => m + 1);
     setDiagnosisActive(false); // Reset diagnosis on change
   };
 
@@ -398,6 +451,7 @@ export function DataCenterBuilderScreen() {
       !(c.from.deviceId === deviceId && c.from.port === port) &&
       !(c.to?.deviceId === deviceId && c.to?.port === port)
     ));
+    setMovements(m => m + 1);
   };
 
   const handleValidate = () => {
@@ -418,32 +472,50 @@ export function DataCenterBuilderScreen() {
     }) && connections.length === activeLevel.connections_required.length;
 
     if (isHardwareCorrect && isCablingCorrect) {
-      const now = Date.now();
-      const timeSecs = startTime ? Math.floor((now - startTime) / 1000) : 0;
-      setElapsedTime(timeSecs);
+      setIsSyncing(true);
+      playSound('complete');
+      setShowSuccessTransition(true);
+
+      // Reset and Start Animation
+      successScale.setValue(0);
+      successOpacity.setValue(1);
       
-      setCompletedLevels(new Set([...completedLevels, activeLevel.id]));
-      setShowCompletionEffect(true);
-      
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(completionRingScale, { toValue: 2.4, duration: 1400, useNativeDriver: true }),
-          Animated.timing(completionRingOpacity, { toValue: 0, duration: 1400, useNativeDriver: true }),
-          Animated.timing(completionBgOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(completionIconScale, { toValue: 1, duration: 600, useNativeDriver: true }),
-          Animated.timing(completionTextOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ]),
-        Animated.delay(1000),
-        Animated.parallel([
-          Animated.timing(completionBgOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-          Animated.timing(completionTextOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-        ])
-      ]).start(() => {
-        setShowCompletionEffect(false);
-        setFinished(true);
-      });
+      Animated.timing(successScale, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: true,
+      }).start();
+
+      setTimeout(() => {
+        Animated.timing(successOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowSuccessTransition(false);
+          setFinished(true);
+          setIsSyncing(false);
+          
+          const now = Date.now();
+          const timeSecs = startTime ? Math.floor((now - startTime) / 1000) : 0;
+          setElapsedTime(timeSecs);
+          setCompletedLevels(new Set([...completedLevels, activeLevel.id]));
+          if (user?.id) {
+             saveDataCenterResult(user.id, activeLevel.id, timeSecs, movements);
+          }
+        });
+      }, 3000);
     } else {
-      Alert.alert("Arquitetura Incompleta", "Você ainda precisa realizar mais conexões para atingir a meta do projeto.");
+      playSound('error');
+      // Diagnostic blink sequence
+      Animated.sequence([
+        Animated.timing(blinkAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
+        Animated.timing(blinkAnim, { toValue: 0.3, duration: 400, useNativeDriver: false }),
+        Animated.timing(blinkAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
+        Animated.timing(blinkAnim, { toValue: 0, duration: 400, useNativeDriver: false }),
+      ]).start();
+      
+      Alert.alert("Arquitetura Incompleta", "Verifique os LEDs diagnósticos que estão piscando em vermelho/laranja.");
     }
   };
 
@@ -489,50 +561,56 @@ export function DataCenterBuilderScreen() {
   const renderWorkbench = () => {
     if (!activeLevel) return null;
 
+    // Standardized results handling
+    const renderHeader = () => (
+      <View style={[styles.workbenchHeader, { paddingTop: topPadding + 10, backgroundColor: surfaceColor, borderBottomWidth: 1, borderBottomColor: borderColor }]}>
+        <TouchableOpacity onPress={() => setActiveLevel(null)} style={styles.backButton}>
+          <MaterialIcons name="close" size={24} color={textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.workbenchTitle, { color: textPrimary }]}>RESULTADOS</Text>
+        <View style={{ width: 40 }} />
+      </View>
+    );
+
     if (finished) {
       return (
-        <ScrollView
-          style={{ flex: 1, backgroundColor: bg }}
-          contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingTop: topPadding }}
-        >
-          <View style={{ width: '100%', maxWidth: 420 }}>
-            <View style={{ alignItems: 'center', marginBottom: 24 }}>
-              <View style={styles.successIconOuter}>
-                <MaterialIcons name="emoji-events" size={42} color={QUIZ_COLORS.success} />
-              </View>
-              <Text style={[styles.concluidoTitle, { color: QUIZ_COLORS.success }]}>CONCLUÍDO!</Text>
-              <Text style={[styles.concluidoSubtitle, { color: textMuted }]}>O DataCenter está em pleno funcionamento.</Text>
+        <View style={{ flex: 1, backgroundColor: bg }}>
+          {renderHeader()}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          >
+            <View style={{ alignItems: 'center', marginBottom: 32 }}>
+              <MaterialIcons name="emoji-events" size={80} color={QUIZ_COLORS.success} />
+              <Text style={{ fontSize: 24, fontWeight: '800', color: textPrimary, marginTop: 16 }}>PROJETO VALIDADO!</Text>
+              <Text style={{ color: textMuted, marginTop: 8, textAlign: 'center' }}>
+                O DataCenter está operando em conformidade técnica.
+              </Text>
             </View>
-
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-              <QuizStatCard 
-                label="tempo" 
-                value={`${Math.floor(elapsedTime / 60)}:${(elapsedTime % 60).toString().padStart(2, '0')}`} 
-                icon="timer" 
-                accentColor={QUIZ_COLORS.primary} 
-                style={{ flex: 1 }} align="center" 
-              />
-              <QuizStatCard 
-                label="links" 
-                value={`${connections.length}`} 
-                icon="lan" 
-                accentColor={QUIZ_COLORS.success} 
-                style={{ flex: 1 }} align="center" 
-              />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              <TouchableOpacity activeOpacity={0.7} style={styles.primaryAction} onPress={() => setActiveLevel(null)}>
-                <MaterialIcons name="grid-view" size={20} color="#FFF" />
-                <Text style={styles.primaryActionText}>Voltar aos Projetos</Text>
+            
+            <View style={{ width: '100%', maxWidth: 300, gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => setActiveLevel(null)}
+                style={{ 
+                  backgroundColor: QUIZ_COLORS.success, 
+                  padding: 16, borderRadius: 12, alignItems: 'center' 
+                }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 16 }}>CONCLUIR PROJETO</Text>
               </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.7} style={styles.secondaryAction} onPress={() => handleLevelSelect(activeLevel)}>
-                <MaterialIcons name="replay" size={20} color={textPrimary} />
-                <Text style={[styles.secondaryActionText, { color: textPrimary }]}>Refazer Nível</Text>
+              <TouchableOpacity
+                onPress={() => handleLevelSelect(activeLevel)}
+                style={{ 
+                  backgroundColor: surfaceColor, 
+                  padding: 16, borderRadius: 12, alignItems: 'center',
+                  borderWidth: 1, borderColor: borderColor
+                }}
+              >
+                <Text style={{ color: textPrimary, fontWeight: '700' }}>REFAZER NÍVEL</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       );
     }
 
@@ -549,8 +627,8 @@ export function DataCenterBuilderScreen() {
             </Text>
           </View>
           {isHardwareInstalled && (
-            <TouchableOpacity onPress={handleValidate} style={[styles.validateButton, { backgroundColor: connections.length === activeLevel.connections_required.length ? '#22C55E' : '#2D3139' }]}>
-              <Text style={styles.validateButtonText}>LIGAR</Text>
+            <TouchableOpacity onPress={handleValidate} disabled={isSyncing} style={[styles.validateButton, { backgroundColor: connections.length === activeLevel.connections_required.length ? '#22C55E' : '#2D3139', opacity: isSyncing ? 0.6 : 1 }]}>
+              <Text style={styles.validateButtonText}>{isSyncing ? 'SINCRONIZANDO...' : 'VALIDAR'}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -588,6 +666,7 @@ export function DataCenterBuilderScreen() {
                           const newInstalled = { ...installedDevices };
                           delete newInstalled[index];
                           setInstalledDevices(newInstalled);
+                          setMovements(m => m + 1);
                           setDiagnosisActive(false);
                         } else {
                           setSelectedSlotForInstall(index);
@@ -632,7 +711,7 @@ export function DataCenterBuilderScreen() {
                {[1,2,3,4,5,6,7,8].map(i => <View key={i} style={styles.railHole} />)}
             </View>
 
-            {/* Cable Rendering Layer */}
+             {/* Cable Rendering Layer */}
             <View style={StyleSheet.absoluteFill} pointerEvents="none">
               <Svg width="100%" height="100%">
                 {connections.map(conn => {
@@ -644,34 +723,45 @@ export function DataCenterBuilderScreen() {
                   const cable = data.cables.find(c => c.id === conn.cableId);
                   const color = cable?.type === 'fiber' ? '#F43F5E' : (cable?.type === 'ethernet' ? '#3B82F6' : '#F59E0B');
 
-                  // Rightward Curve Logic
+                  // Check if this specific connection is correct
+                  const isCorrect = activeLevel.connections_required.some(req => {
+                    const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
+                    const cTo = `${conn.to?.deviceId}.${conn.to?.port}`;
+                    return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId;
+                  });
+
+                  const cableOpacity = diagnosisActive && !isCorrect 
+                    ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 0.1] }) 
+                    : 0.7;
+
+                  // Bezier curve points
                   const curveOffset = 60; // How much it bulges to the right
                   const midY = (p1.y + p2.y) / 2;
 
                   return (
                     <React.Fragment key={conn.id}>
                       {/* Cable Path with rightward curve */}
-                      <Path
+                      <AnimatedPath
                         d={`M ${p1.x} ${p1.y} C ${p1.x + curveOffset} ${p1.y} ${p2.x + curveOffset} ${p2.y} ${p2.x} ${p2.y}`}
                         stroke={color}
                         strokeWidth="3.5"
                         fill="none"
                         strokeLinecap="round"
-                        opacity={0.7}
+                        opacity={cableOpacity}
                       />
                       {/* Start Connector - Higher contrast */}
-                      <Path
+                      <AnimatedPath
                         d={`M ${p1.x - 5} ${p1.y - 4} h 10 v 8 h -10 z`}
                         fill={color}
-                        opacity={1}
+                        opacity={diagnosisActive && !isCorrect ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1}
                         stroke="rgba(0,0,0,0.3)"
                         strokeWidth="1"
                       />
                       {/* End Connector - Higher contrast */}
-                      <Path
+                      <AnimatedPath
                         d={`M ${p2.x - 5} ${p2.y - 4} h 10 v 8 h -10 z`}
                         fill={color}
-                        opacity={1}
+                        opacity={diagnosisActive && !isCorrect ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1}
                         stroke="rgba(0,0,0,0.3)"
                         strokeWidth="1"
                       />
@@ -740,7 +830,7 @@ export function DataCenterBuilderScreen() {
         )}
 
         <StudyCompletionOverlay 
-          visible={showCompletionEffect} 
+          visible={showCompletionEffect || finished} 
           correctCount={connections.length} 
           totalCards={activeLevel.connections_required.length} 
           backgroundOpacity={completionBgOpacity}
@@ -758,6 +848,48 @@ export function DataCenterBuilderScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {!activeLevel ? renderLevelList() : renderWorkbench()}
+
+      {showSuccessTransition && (
+        <Animated.View style={{
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: 'rgba(13, 15, 16, 0.9)',
+          zIndex: 9999,
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: successOpacity
+        }}>
+          <Animated.View style={{
+            transform: [{ scale: successScale }],
+            alignItems: 'center'
+          }}>
+            <View style={{
+              width: 160,
+              height: 160,
+              borderRadius: 80,
+              backgroundColor: '#22C55E',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#22C55E',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: 40,
+              elevation: 20
+            }}>
+              <MaterialIcons name="check" size={100} color="#FFFFFF" />
+            </View>
+            <Text style={{ 
+              color: '#22C55E', 
+              fontSize: 24, 
+              fontWeight: '900', 
+              marginTop: 32,
+              letterSpacing: 2,
+              textTransform: 'uppercase'
+            }}>
+              Projeto Homologado
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      )}
     </View>
   );
 }

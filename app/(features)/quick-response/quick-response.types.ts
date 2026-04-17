@@ -1,17 +1,19 @@
-export type QuickResponseDifficulty = 'fácil' | 'médio' | 'difícil';
+export type QuickResponseDifficulty = 'Baixa' | 'Urgente' | 'Crítica';
+
 
 export type QuickResponseOption = {
   id: string;
   text: string;
-  correct: boolean;
-  feedback: string;
+  is_correct: boolean;
+  feedback?: string;
 };
 
 export type QuickResponseExercise = {
   id: string;
   level: QuickResponseDifficulty;
   alert: string;
-  options: QuickResponseOption[];
+  actions: QuickResponseOption[];
+  success_message: string;
 };
 
 export type QuickResponseCategory = {
@@ -27,3 +29,4 @@ export type QuickResponseData = {
   version: string;
   categories: QuickResponseCategory[];
 };
+

@@ -199,3 +199,10 @@ export type CodingPracticeResult = {
   bestMoves: number;
   updatedAt: unknown;
 };
+export type QuickResponseResult = {
+  exerciseId: string;
+  completed: boolean;
+  attempts: number;
+  withinSLA: boolean;
+  updatedAt: unknown;
+};
