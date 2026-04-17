@@ -99,20 +99,34 @@ export function CommunityUserCard({
             {isCurrentUser ? ' (você)' : ''}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 6, marginTop: 4 }}>
-            <Text style={{ color: textSecondary, fontSize: 11 }}>
-              Quiz: {userProfile.totalQuestionsAnswered}
-            </Text>
-            <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>
-            <Text style={{ color: textSecondary, fontSize: 11 }}>
-              Quebra-Cabeça: {userProfile.totalCodingCompleted}
-            </Text>
+            {userProfile.totalQuestionsAnswered > 0 && (
+              <Text style={{ color: textSecondary, fontSize: 11 }}>Quiz: {userProfile.totalQuestionsAnswered}</Text>
+            )}
+            {userProfile.totalCodingCompleted > 0 && (
+              <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                {userProfile.totalQuestionsAnswered > 0 && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
+                <Text style={{ color: textSecondary, fontSize: 11 }}>Códigos: {userProfile.totalCodingCompleted}</Text>
+              </View>
+            )}
+            {(userProfile.totalIncidentsCompleted ?? 0) > 0 && (
+              <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                {(userProfile.totalQuestionsAnswered > 0 || userProfile.totalCodingCompleted > 0) && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
+                <Text style={{ color: textSecondary, fontSize: 11 }}>Incidentes: {userProfile.totalIncidentsCompleted}</Text>
+              </View>
+            )}
+            {(userProfile.totalDataCenterCompleted ?? 0) > 0 && (
+              <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                {(userProfile.totalQuestionsAnswered > 0 || userProfile.totalCodingCompleted > 0 || (userProfile.totalIncidentsCompleted ?? 0) > 0) && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
+                <Text style={{ color: textSecondary, fontSize: 11 }}>DC: {userProfile.totalDataCenterCompleted}</Text>
+              </View>
+            )}
             {effectiveStreak > 0 && (
-              <>
+              <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                 <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>
                 <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '700' }}>
-                  🔥 {effectiveStreak} {effectiveStreak === 1 ? 'dia' : 'dias'}
+                  🔥 {effectiveStreak}
                 </Text>
-              </>
+              </View>
             )}
           </View>
         </View>
@@ -167,42 +181,102 @@ export function CommunityUserCard({
             )}
 
             {/* Coding Info */}
-            <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#E2E8F0', opacity: 0.5 }} />
+            {userProfile.topCodingCategory && (
+              <>
+                <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#E2E8F0', opacity: 0.5 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                      Praticar Código: Especialidade
+                    </Text>
+                    <Text style={{ color: textPrimary, fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>{userProfile.topCodingCategory}</Text>
+                  </View>
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>Eficiência</Text>
+                    <Text style={{ color: (userProfile.topCodingAccuracy ?? 0) >= 80 ? '#10B981' : '#F59E0B', fontSize: 16, fontWeight: '800' }}>
+                      {userProfile.topCodingAccuracy ?? 0}%
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, height: 36, backgroundColor: isDark ? '#30363D' : '#E2E8F0' }} />
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>Tempo Médio</Text>
+                    <Text style={{ color: accentColor, fontSize: 14, fontWeight: '800' }}>
+                      {userProfile.topCodingAvgTimeMs ? `${(userProfile.topCodingAvgTimeMs / 1000).toFixed(0)}s` : '—'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
 
-            {userProfile.topCodingCategory ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: textSecondary, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
-                    Quebra-Cabeça: Tema mais estudado
-                  </Text>
-                  <Text style={{ color: textPrimary, fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>{userProfile.topCodingCategory}</Text>
+            {/* Incidents Info */}
+            {(userProfile.totalIncidentsCompleted ?? 0) > 0 && (
+              <>
+                <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#E2E8F0', opacity: 0.5 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                      Gestão de Incidentes
+                    </Text>
+                    <Text style={{ color: textPrimary, fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>
+                      Especialista NRE
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>Resolvidos</Text>
+                    <Text style={{ color: '#F43F5E', fontSize: 16, fontWeight: '800' }}>
+                      {userProfile.totalIncidentsCompleted}
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, height: 36, backgroundColor: isDark ? '#30363D' : '#E2E8F0' }} />
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>SLA Médio</Text>
+                    <Text style={{ color: '#F43F5E', fontSize: 14, fontWeight: '800' }}>
+                      {userProfile.avgIncidentTimeMs ? `${(userProfile.avgIncidentTimeMs / 1000).toFixed(0)}s` : '—'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ alignItems: 'center', gap: 2 }}>
-                  <Text style={{ color: textSecondary, fontSize: 10 }}>Eficiência</Text>
-                  <Text
-                    style={{
-                      color:
-                        (userProfile.topCodingAccuracy ?? 0) >= 80
-                          ? '#10B981'
-                          : (userProfile.topCodingAccuracy ?? 0) >= 50
-                            ? '#F59E0B'
-                            : '#EF4444',
-                      fontSize: 16,
-                      fontWeight: '800',
-                    }}>
-                    {userProfile.topCodingAccuracy ?? 0}%
-                  </Text>
+              </>
+            )}
+
+            {/* Data Center Info */}
+            {(userProfile.totalDataCenterCompleted ?? 0) > 0 && (
+              <>
+                <View style={{ height: 1, backgroundColor: isDark ? '#30363D' : '#E2E8F0', opacity: 0.5 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: compact ? 10 : 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                      Data Center Builder
+                    </Text>
+                    <Text style={{ color: textPrimary, fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>
+                      Engenheiro de Infraestrutura
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'center', gap: 2, minWidth: 60 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>Qualidade</Text>
+                    <Text style={{ color: '#8B5CF6', fontSize: 16, fontWeight: '800' }}>
+                      {userProfile.avgDataCenterScore}%
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, height: 36, backgroundColor: isDark ? '#30363D' : '#E2E8F0' }} />
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>T. Médio</Text>
+                    <Text style={{ color: '#8B5CF6', fontSize: 14, fontWeight: '800' }}>
+                      {userProfile.avgDataCenterTimeMs ? `${(userProfile.avgDataCenterTimeMs / 1000).toFixed(0)}s` : '—'}
+                    </Text>
+                  </View>
+                  <View style={{ width: 1, height: 36, backgroundColor: isDark ? '#30363D' : '#E2E8F0' }} />
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text style={{ color: textSecondary, fontSize: 10 }}>Movs</Text>
+                    <Text style={{ color: '#8B5CF6', fontSize: 14, fontWeight: '800' }}>
+                      {userProfile.avgDataCenterMoves ?? '—'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ width: 1, height: 36, backgroundColor: isDark ? '#30363D' : '#E2E8F0' }} />
-                <View style={{ alignItems: 'center', gap: 2 }}>
-                  <Text style={{ color: textSecondary, fontSize: 10 }}>Tempo total</Text>
-                  <Text style={{ color: accentColor, fontSize: 14, fontWeight: '800' }}>
-                    {userProfile.topCodingAvgTimeMs ? `${(userProfile.topCodingAvgTimeMs / 1000).toFixed(0)}s` : '—'}
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <Text style={{ color: textSecondary, fontSize: 12, textAlign: 'center' }}>Sem dados de Quebra-Cabeça disponíveis.</Text>
+              </>
+            )}
+
+            {!(userProfile.topCategory || userProfile.topCodingCategory || (userProfile.totalIncidentsCompleted ?? 0) > 0 || (userProfile.totalDataCenterCompleted ?? 0) > 0) && (
+              <Text style={{ color: textSecondary, fontSize: 12, textAlign: 'center' }}>Nenhuma atividade específica ainda.</Text>
             )}
           </View>
         </View>

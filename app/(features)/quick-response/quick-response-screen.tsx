@@ -81,7 +81,7 @@ export function QuickResponseScreen() {
   const getSLADuration = (_level: string) => 40;
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: any;
     // Don't start timer if we are syncing, showing feedback, or in transition
     if (activeExercise && !feedback && !isSyncing && !showSuccessTransition && timeLeft > 0) {
       timer = setInterval(() => {
@@ -445,7 +445,7 @@ export function QuickResponseScreen() {
                     <Text style={{ fontSize: 13, fontWeight: '800', color: '#38BDF8' }}>{feedback.stats.attempts}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(168,85,247,0.1)' : '#FAF5FF', padding: 12, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#A855F730' }}>
-                    <MaterialIcons name="check_circle_outline" size={18} color="#A855F7" />
+                    <MaterialIcons name="check-circle-outline" size={18} color="#A855F7" />
                     <Text style={{ fontSize: 10, fontWeight: '700', color: textMuted, marginTop: 4 }}>AÇÕES</Text>
                     <Text style={{ fontSize: 13, fontWeight: '800', color: '#A855F7' }}>{activeExercise?.actions.filter(a => a.is_correct).length}</Text>
                   </View>

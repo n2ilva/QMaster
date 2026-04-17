@@ -1,7 +1,8 @@
-import { type TrackIcon } from "@/constants/track-styles";
+import { type ComponentProps } from "react";
+import type { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export type HomeFeatureItem = {
-  icon: TrackIcon;
+  icon: ComponentProps<typeof MaterialCommunityIcons>["name"];
   text: string;
 };
 

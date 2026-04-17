@@ -1,255 +1,1002 @@
 {
   "game": {
     "name": "DataCenter Builder",
-    "version": "2.0"
+    "version": "3.0"
   },
   "cables": [
-    { "id": "cat6", "type": "ethernet", "speed": "1Gbps" },
-    { "id": "cat6a", "type": "ethernet", "speed": "10Gbps" },
-    { "id": "fiber", "type": "fiber", "speed": "40Gbps" },
-    { "id": "coaxial", "type": "coaxial", "speed": "1Gbps" }
+    { "id": "cat6",    "type": "ethernet",    "speed": "1Gbps",   "max_distance": "100m",  "use_case": "Access layer, câmeras, telefonia VoIP" },
+    { "id": "cat6a",   "type": "ethernet",    "speed": "10Gbps",  "max_distance": "100m",  "use_case": "Servidores, storage, links de distribuição" },
+    { "id": "sfp_plus","type": "fiber_copper","speed": "10Gbps",  "max_distance": "300m",  "use_case": "Uplinks de switches de distribuição" },
+    { "id": "fiber_lc","type": "fiber",       "speed": "40Gbps",  "max_distance": "10km",  "use_case": "Backbone, ISP, links core" },
+    { "id": "fiber_qsfp","type":"fiber",      "speed": "100Gbps", "max_distance": "100m",  "use_case": "Core switches de alto desempenho" },
+    { "id": "coaxial", "type": "coaxial",     "speed": "1Gbps",   "max_distance": "500m",  "use_case": "Link físico do ISP (última milha)" },
+    { "id": "dac",     "type": "direct_attach","speed": "10Gbps", "max_distance": "7m",    "use_case": "Conexão direta switch-servidor em rack" }
   ],
+
+  "vm_types": [
+    { "id": "vm_web",     "label": "VM Web Server",        "icon": "globe",    "os": "Ubuntu Server 22.04", "vnic": ["eth0"] },
+    { "id": "vm_db",      "label": "VM Database",          "icon": "database", "os": "Windows Server 2022",  "vnic": ["eth0"] },
+    { "id": "vm_app",     "label": "VM Application",       "icon": "cpu",      "os": "RHEL 9",               "vnic": ["eth0"] },
+    { "id": "vm_backup",  "label": "VM Backup Agent",      "icon": "archive",  "os": "Ubuntu Server 22.04",  "vnic": ["eth0"] },
+    { "id": "vm_monitor", "label": "VM Monitoring (Zabbix)","icon": "activity","os": "Ubuntu Server 22.04",  "vnic": ["eth0"] },
+    { "id": "vm_vpn",     "label": "VM VPN Gateway",       "icon": "shield",   "os": "pfSense",              "vnic": ["eth0"] }
+  ],
+
   "levels": [
+
     {
       "id": 1,
-      "name": "Conexão básica de rede",
+      "tier": "Empresa de Pequeno Porte",
+      "name": "Conectividade Básica de Escritório",
       "difficulty": "easy",
+      "description": "Escritório de 5 a 20 usuários. Estrutura mínima viável com ISP, roteador, switch de acesso e um servidor de arquivos local.",
       "inventory": [
-        { "id": "modem", "type": "telecom", "ports": ["wan_out"] },
-        { "id": "router", "type": "network", "ports": ["wan_in", "lan_out"] },
-        { "id": "switch", "type": "network", "ports": ["uplink", "lan1", "lan2"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] }
+        {
+          "id": "modem_isp",
+          "label": "Modem ISP (ZTE F670L)",
+          "type": "telecom",
+          "ports": ["wan_out"],
+          "specs": { "link": "Fibra GPON", "speed": "200Mbps" }
+        },
+        {
+          "id": "router_mikrotik",
+          "label": "Roteador MikroTik hEX RB750Gr3",
+          "type": "network",
+          "ports": ["wan_in", "lan1", "lan2", "lan3", "lan4"],
+          "specs": { "throughput": "1Gbps", "nat": true, "dhcp": true }
+        },
+        {
+          "id": "switch_tp_link",
+          "label": "Switch TP-Link TL-SG108 (8 portas)",
+          "type": "network",
+          "ports": ["port1", "port2", "port3", "port4", "port5", "port6", "port7", "port8"],
+          "specs": { "ports": 8, "managed": false, "poe": false }
+        },
+        {
+          "id": "server_qnap",
+          "label": "NAS QNAP TS-464 (Servidor de Arquivos)",
+          "type": "storage",
+          "ports": ["eth0", "eth1"],
+          "specs": { "disks": 4, "raid": "RAID 5", "capacity": "16TB" }
+        },
+        {
+          "id": "ap_tp_link",
+          "label": "Access Point TP-Link EAP225",
+          "type": "wireless",
+          "ports": ["eth0"],
+          "specs": { "wifi": "802.11ac", "band": "Dual-band" }
+        }
       ],
       "connections_required": [
-        { "from": "modem.wan_out", "to": "router.wan_in", "cable": "coaxial" },
-        { "from": "router.lan_out", "to": "switch.uplink", "cable": "cat6" },
-        { "from": "switch.lan1", "to": "server.eth0", "cable": "cat6" }
+        { "from": "modem_isp.wan_out",     "to": "router_mikrotik.wan_in", "cable": "coaxial",  "note": "Link de entrada do ISP" },
+        { "from": "router_mikrotik.lan1",  "to": "switch_tp_link.port1",   "cable": "cat6",     "note": "Uplink roteador → switch" },
+        { "from": "switch_tp_link.port2",  "to": "server_qnap.eth0",       "cable": "cat6",     "note": "NAS na rede local" },
+        { "from": "switch_tp_link.port3",  "to": "ap_tp_link.eth0",        "cable": "cat6",     "note": "Access point com alimentação por switch" }
       ],
       "rules": [
-        "A Internet deve começar pelo telecom (Modem)",
-        "O Roteador deve estar conectado antes do Switch",
-        "O Servidor deve se conectar ao Switch"
-      ]
+        "A Internet deve entrar pelo Modem do ISP",
+        "O Roteador MikroTik deve fazer NAT e DHCP para a rede local",
+        "Todos os dispositivos devem se conectar ao Switch TP-Link",
+        "O NAS QNAP deve estar acessível na rede local"
+      ],
+      "vlans": [],
+      "virtual_machines": []
     },
+
     {
       "id": 2,
-      "name": "Rede com dois servidores",
+      "tier": "Empresa de Pequeno Porte",
+      "name": "Rede com Segurança Básica e Múltiplos Dispositivos",
       "difficulty": "easy",
+      "description": "Pequena empresa com 20 a 50 usuários. Firewall UTM para substituir o roteador simples, switch gerenciável de 24 portas, dois servidores e câmeras IP.",
       "inventory": [
-        { "id": "modem", "type": "telecom", "ports": ["wan_out"] },
-        { "id": "router", "type": "network", "ports": ["wan_in", "lan_out"] },
-        { "id": "switch", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3"] },
-        { "id": "server1", "type": "compute", "ports": ["eth0"] },
-        { "id": "server2", "type": "compute", "ports": ["eth0"] }
+        {
+          "id": "modem_isp",
+          "label": "Modem ISP (ZTE F670L)",
+          "type": "telecom",
+          "ports": ["wan_out"],
+          "specs": { "link": "Fibra GPON", "speed": "500Mbps" }
+        },
+        {
+          "id": "fw_fortinet_60f",
+          "label": "Firewall FortiGate 60F",
+          "type": "security",
+          "ports": ["wan1", "lan1", "lan2", "dmz"],
+          "specs": { "throughput": "10Gbps", "utm": true, "vpn": true, "ips": true }
+        },
+        {
+          "id": "switch_cisco_sg350",
+          "label": "Switch Cisco SG350-28 (28 portas gerenciável)",
+          "type": "network",
+          "ports": ["uplink", "port1","port2","port3","port4","port5","port6","port7","port8","port9","port10","port11","port12"],
+          "specs": { "ports": 28, "managed": true, "vlans": true, "poe_ports": 24 }
+        },
+        {
+          "id": "server_dell_t40",
+          "label": "Servidor Dell PowerEdge T40",
+          "type": "compute",
+          "ports": ["eth0"],
+          "specs": { "cpu": "Xeon E-2224G", "ram": "16GB", "role": "Servidor de arquivos" }
+        },
+        {
+          "id": "server_dell_t140",
+          "label": "Servidor Dell PowerEdge T140",
+          "type": "compute",
+          "ports": ["eth0"],
+          "specs": { "cpu": "Xeon E-2234", "ram": "32GB", "role": "Servidor de aplicações" }
+        },
+        {
+          "id": "nvr_intelbras",
+          "label": "NVR Intelbras MHDX 3132",
+          "type": "security",
+          "ports": ["eth0"],
+          "specs": { "cameras": 32, "resolution": "Full HD", "storage": "4TB HDD" }
+        },
+        {
+          "id": "camera_ip_1",
+          "label": "Câmera IP Intelbras VIP 1220 B (1)",
+          "type": "security",
+          "ports": ["eth0"],
+          "specs": { "resolution": "1080p", "poe": true }
+        },
+        {
+          "id": "camera_ip_2",
+          "label": "Câmera IP Intelbras VIP 1220 B (2)",
+          "type": "security",
+          "ports": ["eth0"],
+          "specs": { "resolution": "1080p", "poe": true }
+        },
+        {
+          "id": "ap_unifi",
+          "label": "Access Point Ubiquiti UniFi AP-AC-Pro",
+          "type": "wireless",
+          "ports": ["eth0"],
+          "specs": { "wifi": "802.11ac Wave 2", "users": 300 }
+        }
       ],
       "connections_required": [
-        { "from": "modem.wan_out", "to": "router.wan_in", "cable": "coaxial" },
-        { "from": "router.lan_out", "to": "switch.uplink", "cable": "cat6" },
-        { "from": "switch.lan1", "to": "server1.eth0", "cable": "cat6" },
-        { "from": "switch.lan2", "to": "server2.eth0", "cable": "cat6" }
-      ]
+        { "from": "modem_isp.wan_out",       "to": "fw_fortinet_60f.wan1",       "cable": "coaxial",   "note": "ISP → Firewall (WAN)" },
+        { "from": "fw_fortinet_60f.lan1",    "to": "switch_cisco_sg350.uplink",  "cable": "cat6a",     "note": "Firewall → Switch (LAN)" },
+        { "from": "switch_cisco_sg350.port1","to": "server_dell_t40.eth0",       "cable": "cat6a",     "note": "Servidor de arquivos" },
+        { "from": "switch_cisco_sg350.port2","to": "server_dell_t140.eth0",      "cable": "cat6a",     "note": "Servidor de aplicações" },
+        { "from": "switch_cisco_sg350.port3","to": "nvr_intelbras.eth0",         "cable": "cat6",      "note": "Sistema de câmeras (NVR)" },
+        { "from": "switch_cisco_sg350.port4","to": "camera_ip_1.eth0",           "cable": "cat6",      "note": "Câmera IP 1 (PoE)" },
+        { "from": "switch_cisco_sg350.port5","to": "camera_ip_2.eth0",           "cable": "cat6",      "note": "Câmera IP 2 (PoE)" },
+        { "from": "switch_cisco_sg350.port6","to": "ap_unifi.eth0",             "cable": "cat6",      "note": "Access Point Wi-Fi" }
+      ],
+      "rules": [
+        "O FortiGate deve ser o único ponto de entrada da internet",
+        "Câmeras e NVR devem estar em uma VLAN separada da rede de dados",
+        "Servidores devem ter conexão Cat6a para melhor desempenho",
+        "O switch Cisco deve ter PoE para alimentar câmeras e APs"
+      ],
+      "vlans": [
+        { "id": 10, "name": "VLAN Dados",    "devices": ["server_dell_t40", "server_dell_t140", "ap_unifi"] },
+        { "id": 20, "name": "VLAN Câmeras",  "devices": ["nvr_intelbras", "camera_ip_1", "camera_ip_2"] }
+      ],
+      "virtual_machines": []
     },
+
     {
       "id": 3,
-      "name": "Adicionando Firewall",
+      "tier": "Empresa de Médio Porte",
+      "name": "Infraestrutura de Data Center Interno",
       "difficulty": "medium",
+      "description": "Empresa de médio porte com 50 a 200 usuários. Data center interno com rack dedicado, virtualização básica, storage dedicado e link redundante.",
       "inventory": [
-        { "id": "modem", "type": "telecom", "ports": ["wan_out"] },
-        { "id": "firewall", "type": "security", "ports": ["wan_in", "lan_out"] },
-        { "id": "switch", "type": "network", "ports": ["uplink", "lan1", "lan2"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] }
+        {
+          "id": "isp_link",
+          "label": "ONU ISP (Huawei MA5671A - GPON 1Gbps)",
+          "type": "telecom",
+          "ports": ["wan_out"],
+          "specs": { "technology": "GPON", "speed": "1Gbps" }
+        },
+        {
+          "id": "fw_fortinet_100f",
+          "label": "Firewall FortiGate 100F",
+          "type": "security",
+          "ports": ["wan1", "wan2", "lan1", "lan2", "dmz1", "dmz2"],
+          "specs": { "throughput": "20Gbps", "ha": true, "ssl_vpn": 500 }
+        },
+        {
+          "id": "switch_core_cisco_c9300",
+          "label": "Switch Core Cisco Catalyst 9300-24P",
+          "type": "network",
+          "ports": ["uplink1","uplink2","sfp1","sfp2","port1","port2","port3","port4","port5","port6","port7","port8"],
+          "specs": { "ports": 24, "uplink_speed": "10Gbps", "stacking": true, "poe": "PoE+" }
+        },
+        {
+          "id": "switch_access_cisco_c2960",
+          "label": "Switch Acesso Cisco Catalyst 2960-X-24PS",
+          "type": "network",
+          "ports": ["uplink","port1","port2","port3","port4","port5","port6","port7","port8"],
+          "specs": { "ports": 24, "poe": "PoE+", "managed": true }
+        },
+        {
+          "id": "server_hp_dl380",
+          "label": "Servidor HP ProLiant DL380 Gen10 (Virtualização)",
+          "type": "compute",
+          "ports": ["eth0", "eth1", "eth2", "eth3"],
+          "specs": { "cpu": "2x Xeon Gold 6226R", "ram": "256GB", "storage": "8x SSD 480GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_web_01",     "type": "vm_web",     "label": "VM-WEB-01",  "vlan": 10 },
+            { "vm_id": "vm_app_01",     "type": "vm_app",     "label": "VM-APP-01",  "vlan": 10 },
+            { "vm_id": "vm_db_01",      "type": "vm_db",      "label": "VM-DB-01",   "vlan": 30 },
+            { "vm_id": "vm_monitor_01", "type": "vm_monitor", "label": "VM-MON-01",  "vlan": 40 }
+          ]
+        },
+        {
+          "id": "storage_dell_me4",
+          "label": "Storage Dell EMC ME4012 SAN",
+          "type": "storage",
+          "ports": ["eth0", "eth1", "iscsi0", "iscsi1"],
+          "specs": { "capacity": "24TB", "type": "iSCSI/FC", "raid": "RAID 6", "disks": 12 }
+        },
+        {
+          "id": "ups_apc_3000",
+          "label": "No-break APC Smart-UPS 3000VA",
+          "type": "power",
+          "ports": ["mgmt_eth"],
+          "specs": { "power": "3000VA", "runtime": "30min", "network_mgmt": true }
+        }
       ],
       "connections_required": [
-        { "from": "modem.wan_out", "to": "firewall.wan_in", "cable": "coaxial" },
-        { "from": "firewall.lan_out", "to": "switch.uplink", "cable": "cat6a" },
-        { "from": "switch.lan1", "to": "server.eth0", "cable": "cat6" }
+        { "from": "isp_link.wan_out",                 "to": "fw_fortinet_100f.wan1",           "cable": "fiber_lc",  "note": "Link ISP principal" },
+        { "from": "fw_fortinet_100f.lan1",            "to": "switch_core_cisco_c9300.uplink1", "cable": "sfp_plus",  "note": "Firewall → Core Switch (10Gbps)" },
+        { "from": "switch_core_cisco_c9300.sfp1",     "to": "server_hp_dl380.eth0",            "cable": "dac",       "note": "Core Switch → Servidor ESXi (10Gbps)" },
+        { "from": "switch_core_cisco_c9300.sfp2",     "to": "server_hp_dl380.eth1",            "cable": "dac",       "note": "Core Switch → Servidor ESXi (redundância)" },
+        { "from": "switch_core_cisco_c9300.port1",    "to": "storage_dell_me4.iscsi0",         "cable": "cat6a",     "note": "Core Switch → Storage iSCSI" },
+        { "from": "switch_core_cisco_c9300.port2",    "to": "storage_dell_me4.iscsi1",         "cable": "cat6a",     "note": "Core Switch → Storage iSCSI (redundância)" },
+        { "from": "switch_core_cisco_c9300.uplink2",  "to": "switch_access_cisco_c2960.uplink","cable": "sfp_plus",  "note": "Core Switch → Switch de Acesso" },
+        { "from": "switch_access_cisco_c2960.port1",  "to": "ups_apc_3000.mgmt_eth",           "cable": "cat6",      "note": "Gerenciamento do No-break" },
+        { "from": "server_hp_dl380.eth0",             "to": "switch_core_cisco_c9300.sfp1",    "cable": "dac",       "note": "vSwitch ESXi → Core (vm_web_01, vm_app_01 via VLAN 10)" },
+        { "from": "server_hp_dl380.eth1",             "to": "switch_core_cisco_c9300.sfp2",    "cable": "dac",       "note": "vSwitch ESXi → Core (vm_db_01 via VLAN 30, vm_mon via VLAN 40)" }
       ],
       "rules": [
-        "O Firewall deve estar posicionado entre o telecom e a rede local"
+        "O servidor HP DL380 usa VMware ESXi — as VMs são conectadas via vSwitch ao switch físico",
+        "O storage Dell ME4 deve ter dois links iSCSI ativos para redundância",
+        "VMs de banco de dados (VLAN 30) não devem ter acesso direto à VLAN de usuários (VLAN 10)",
+        "O link entre o Firewall e o Core Switch deve ser 10Gbps (SFP+)",
+        "O No-break deve ter gerenciamento de rede para desligamento automático"
+      ],
+      "vlans": [
+        { "id": 10, "name": "VLAN Servidores Web/App", "devices": ["vm_web_01", "vm_app_01"] },
+        { "id": 20, "name": "VLAN Usuários",           "devices": [] },
+        { "id": 30, "name": "VLAN Banco de Dados",     "devices": ["vm_db_01"] },
+        { "id": 40, "name": "VLAN Gerenciamento",      "devices": ["vm_monitor_01", "ups_apc_3000"] }
+      ],
+      "virtual_machines": [
+        { "host": "server_hp_dl380", "vm_id": "vm_web_01",     "vlan": 10 },
+        { "host": "server_hp_dl380", "vm_id": "vm_app_01",     "vlan": 10 },
+        { "host": "server_hp_dl380", "vm_id": "vm_db_01",      "vlan": 30 },
+        { "host": "server_hp_dl380", "vm_id": "vm_monitor_01", "vlan": 40 }
       ]
     },
+
     {
       "id": 4,
-      "name": "Storage em rede",
+      "tier": "Empresa de Médio Porte",
+      "name": "Alta Disponibilidade com Cluster de Virtualização",
       "difficulty": "medium",
+      "description": "Empresa exige uptime de 99,9%. Cluster VMware vSphere com dois hosts ESXi, storage compartilhado via iSCSI, vMotion e HA configurados.",
       "inventory": [
-        { "id": "router", "type": "network", "ports": ["wan_in", "lan_out"] },
-        { "id": "switch", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] },
-        { "id": "storage", "type": "storage", "ports": ["eth0"] }
+        {
+          "id": "isp_fibra",
+          "label": "ONU ISP Fibra (Huawei MA5671A)",
+          "type": "telecom",
+          "ports": ["wan_out"]
+        },
+        {
+          "id": "isp_radio",
+          "label": "Link Rádio Redundante (Ubiquiti airFiber 24)",
+          "type": "telecom",
+          "ports": ["wan_out"],
+          "specs": { "technology": "Microondas 24GHz", "speed": "1.4Gbps" }
+        },
+        {
+          "id": "fw_paloalto_220",
+          "label": "Firewall Palo Alto PA-220 (HA Pair)",
+          "type": "security",
+          "ports": ["wan1", "wan2", "lan", "ha1", "ha2"],
+          "specs": { "throughput": "2Gbps", "ha": "Active/Passive", "threat_prevention": true }
+        },
+        {
+          "id": "switch_core_hp_5130",
+          "label": "Switch Core HP Aruba 5130-24G-4SFP+ EI",
+          "type": "network",
+          "ports": ["uplink1","uplink2","sfp1","sfp2","sfp3","sfp4","port1","port2","port3","port4","port5","port6"],
+          "specs": { "ports": 24, "sfp_plus": 4, "stacking": true }
+        },
+        {
+          "id": "esxi_host_01",
+          "label": "Host ESXi 01 – HP ProLiant DL380 Gen10",
+          "type": "compute",
+          "ports": ["vmnic0", "vmnic1", "vmnic2", "vmnic3"],
+          "specs": { "cpu": "2x Xeon Gold 6226R", "ram": "512GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_web_01",  "type": "vm_web",  "label": "VM-WEB-01",  "vlan": 10 },
+            { "vm_id": "vm_app_01",  "type": "vm_app",  "label": "VM-APP-01",  "vlan": 10 },
+            { "vm_id": "vm_db_01",   "type": "vm_db",   "label": "VM-DB-01",   "vlan": 30 }
+          ]
+        },
+        {
+          "id": "esxi_host_02",
+          "label": "Host ESXi 02 – HP ProLiant DL380 Gen10",
+          "type": "compute",
+          "ports": ["vmnic0", "vmnic1", "vmnic2", "vmnic3"],
+          "specs": { "cpu": "2x Xeon Gold 6226R", "ram": "512GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_web_02",  "type": "vm_web",  "label": "VM-WEB-02",  "vlan": 10 },
+            { "vm_id": "vm_backup_01","type":"vm_backup","label": "VM-BKP-01",  "vlan": 40 }
+          ]
+        },
+        {
+          "id": "storage_synology_sa3600",
+          "label": "Storage Synology SA3600 (iSCSI/NFS)",
+          "type": "storage",
+          "ports": ["eth0","eth1","eth2","eth3"],
+          "specs": { "capacity": "120TB", "type": "iSCSI/NFS", "protocol": "10GbE", "drives": 12 }
+        }
       ],
       "connections_required": [
-        { "from": "router.lan_out", "to": "switch.uplink", "cable": "cat6a" },
-        { "from": "switch.lan1", "to": "server.eth0", "cable": "cat6" },
-        { "from": "switch.lan2", "to": "storage.eth0", "cable": "cat6a" }
-      ]
-    },
-    {
-      "id": 5,
-      "name": "Infraestrutura completa",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "modem", "type": "telecom", "ports": ["wan_out"] },
-        { "id": "firewall", "type": "security", "ports": ["wan_in", "lan_out"] },
-        { "id": "core_switch", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3", "lan4"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] },
-        { "id": "storage", "type": "storage", "ports": ["eth0"] },
-        { "id": "camera_system", "type": "security", "ports": ["eth0"] }
-      ],
-      "connections_required": [
-        { "from": "modem.wan_out", "to": "firewall.wan_in", "cable": "fiber" },
-        { "from": "firewall.lan_out", "to": "core_switch.uplink", "cable": "fiber" },
-        { "from": "core_switch.lan1", "to": "server.eth0", "cable": "cat6a" },
-        { "from": "core_switch.lan2", "to": "storage.eth0", "cable": "cat6a" },
-        { "from": "core_switch.lan3", "to": "camera_system.eth0", "cable": "cat6" }
-      ]
-    },
-    {
-      "id": 6,
-      "name": "Data Center Empresarial Completo",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "modem", "type": "telecom", "ports": ["wan_out"] },
-        { "id": "firewall", "type": "security", "ports": ["wan_in", "lan_out"] },
-        { "id": "core_switch", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3", "lan4", "lan5"] },
-        { "id": "server1", "type": "compute", "ports": ["eth0"] },
-        { "id": "server2", "type": "compute", "ports": ["eth0"] },
-        { "id": "storage", "type": "storage", "ports": ["eth0"] },
-        { "id": "voip", "type": "telephony", "ports": ["eth0"] },
-        { "id": "camera", "type": "security", "ports": ["eth0"] }
-      ],
-      "connections_required": [
-        { "from": "modem.wan_out", "to": "firewall.wan_in", "cable": "fiber" },
-        { "from": "firewall.lan_out", "to": "core_switch.uplink", "cable": "fiber" },
-        { "from": "core_switch.lan1", "to": "server1.eth0", "cable": "cat6a" },
-        { "from": "core_switch.lan2", "to": "server2.eth0", "cable": "cat6a" },
-        { "from": "core_switch.lan3", "to": "storage.eth0", "cable": "fiber" },
-        { "from": "core_switch.lan4", "to": "voip.eth0", "cable": "cat6" },
-        { "from": "core_switch.lan5", "to": "camera.eth0", "cable": "cat6" }
+        { "from": "isp_fibra.wan_out",             "to": "fw_paloalto_220.wan1",            "cable": "fiber_lc",  "note": "ISP principal" },
+        { "from": "isp_radio.wan_out",             "to": "fw_paloalto_220.wan2",            "cable": "cat6a",     "note": "ISP redundante (failover)" },
+        { "from": "fw_paloalto_220.lan",           "to": "switch_core_hp_5130.uplink1",     "cable": "sfp_plus",  "note": "Firewall → Core" },
+        { "from": "switch_core_hp_5130.sfp1",      "to": "esxi_host_01.vmnic0",             "cable": "dac",       "note": "Core → ESXi-01 (tráfego VM / VLAN 10,30)" },
+        { "from": "switch_core_hp_5130.sfp2",      "to": "esxi_host_01.vmnic1",             "cable": "dac",       "note": "Core → ESXi-01 (redundância NIC)" },
+        { "from": "switch_core_hp_5130.sfp3",      "to": "esxi_host_02.vmnic0",             "cable": "dac",       "note": "Core → ESXi-02 (tráfego VM)" },
+        { "from": "switch_core_hp_5130.sfp4",      "to": "esxi_host_02.vmnic1",             "cable": "dac",       "note": "Core → ESXi-02 (redundância NIC)" },
+        { "from": "switch_core_hp_5130.port1",     "to": "esxi_host_01.vmnic2",             "cable": "cat6a",     "note": "vMotion / Storage Network ESXi-01" },
+        { "from": "switch_core_hp_5130.port2",     "to": "esxi_host_02.vmnic2",             "cable": "cat6a",     "note": "vMotion / Storage Network ESXi-02" },
+        { "from": "switch_core_hp_5130.port3",     "to": "storage_synology_sa3600.eth0",    "cable": "cat6a",     "note": "Storage iSCSI link 1" },
+        { "from": "switch_core_hp_5130.port4",     "to": "storage_synology_sa3600.eth1",    "cable": "cat6a",     "note": "Storage iSCSI link 2" },
+        { "from": "switch_core_hp_5130.port5",     "to": "storage_synology_sa3600.eth2",    "cable": "cat6a",     "note": "Storage iSCSI link 3 (MPIO)" },
+        { "from": "switch_core_hp_5130.port6",     "to": "storage_synology_sa3600.eth3",    "cable": "cat6a",     "note": "Storage iSCSI link 4 (MPIO)" }
       ],
       "rules": [
-        "O tipo correto de cabo deve ser utilizado para cada conexão",
-        "Cabo de fibra ótica é obrigatório para o backbone",
-        "Todos os dispositivos devem estar acessíveis a partir do Core Switch"
+        "Os dois hosts ESXi devem acessar o mesmo storage compartilhado (VMFS Datastore) para vMotion",
+        "Cada host ESXi deve ter pelo menos 2 NICs físicas para redundância (NIC Teaming)",
+        "O storage Synology deve ter 4 links ativos com MPIO habilitado",
+        "O Firewall Palo Alto deve operar em Active/Passive com dois links WAN para failover",
+        "A rede de vMotion deve ser isolada em uma VLAN dedicada (VLAN 50)"
+      ],
+      "vlans": [
+        { "id": 10, "name": "VLAN VM Produção",   "devices": ["vm_web_01","vm_app_01","vm_web_02"] },
+        { "id": 30, "name": "VLAN Banco de Dados","devices": ["vm_db_01"] },
+        { "id": 40, "name": "VLAN Gerenciamento", "devices": ["vm_backup_01"] },
+        { "id": 50, "name": "VLAN vMotion/Storage","devices": ["esxi_host_01","esxi_host_02","storage_synology_sa3600"] }
+      ],
+      "virtual_machines": [
+        { "host": "esxi_host_01", "vm_id": "vm_web_01",    "vlan": 10 },
+        { "host": "esxi_host_01", "vm_id": "vm_app_01",    "vlan": 10 },
+        { "host": "esxi_host_01", "vm_id": "vm_db_01",     "vlan": 30 },
+        { "host": "esxi_host_02", "vm_id": "vm_web_02",    "vlan": 10 },
+        { "host": "esxi_host_02", "vm_id": "vm_backup_01", "vlan": 40 }
+      ]
+    },
+
+    {
+      "id": 5,
+      "tier": "Empresa de Grande Porte",
+      "name": "Data Center Corporativo com DMZ e Segmentação Completa",
+      "difficulty": "hard",
+      "description": "Empresa com 200+ usuários, serviços expostos na internet (portal web, e-mail), VPN para filiais e separação de zonas de segurança com DMZ completa.",
+      "inventory": [
+        {
+          "id": "isp_primary",
+          "label": "Link ISP Primário – Vivo Empresas (Fibra 1Gbps)",
+          "type": "telecom",
+          "ports": ["out"],
+          "specs": { "speed": "1Gbps", "sla": "99,9%", "ip_transit": true }
+        },
+        {
+          "id": "isp_secondary",
+          "label": "Link ISP Secundário – Claro Empresas (MPLS 500Mbps)",
+          "type": "telecom",
+          "ports": ["out"],
+          "specs": { "speed": "500Mbps", "type": "MPLS", "ip_transit": true }
+        },
+        {
+          "id": "fw_fortinet_200f",
+          "label": "Firewall FortiGate 200F (HA Cluster)",
+          "type": "security",
+          "ports": ["wan1","wan2","lan1","lan2","dmz1","dmz2","ha_port"],
+          "specs": { "throughput": "27Gbps", "ha": "Active/Active", "ssl_vpn": 5000 }
+        },
+        {
+          "id": "switch_core_cisco_9500",
+          "label": "Switch Core Cisco Catalyst 9500-24Q (100Gbps)",
+          "type": "network",
+          "ports": ["uplink1","uplink2","qsfp1","qsfp2","qsfp3","qsfp4","sfp1","sfp2","sfp3","sfp4","sfp5","sfp6"],
+          "specs": { "ports": 24, "speed": "100Gbps", "stacking": "StackWise-480" }
+        },
+        {
+          "id": "switch_dist_cisco_9300_01",
+          "label": "Switch Distribuição Cisco Catalyst 9300-48P #1",
+          "type": "network",
+          "ports": ["uplink1","uplink2","port1","port2","port3","port4","port5","port6","port7","port8","port9","port10","port11","port12"],
+          "specs": { "ports": 48, "poe": "PoE+ 1440W" }
+        },
+        {
+          "id": "switch_dist_cisco_9300_02",
+          "label": "Switch Distribuição Cisco Catalyst 9300-48P #2",
+          "type": "network",
+          "ports": ["uplink1","uplink2","port1","port2","port3","port4","port5","port6","port7","port8","port9","port10","port11","port12"],
+          "specs": { "ports": 48, "poe": "PoE+ 1440W" }
+        },
+        {
+          "id": "esxi_host_01",
+          "label": "Host VMware ESXi 01 – Dell PowerEdge R740xd",
+          "type": "compute",
+          "ports": ["vmnic0","vmnic1","vmnic2","vmnic3"],
+          "specs": { "cpu": "2x Xeon Gold 6248R", "ram": "768GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_web_01", "type": "vm_web", "label": "VM-WEB-01 (Apache)", "vlan": 10 },
+            { "vm_id": "vm_web_02", "type": "vm_web", "label": "VM-WEB-02 (Apache)", "vlan": 10 },
+            { "vm_id": "vm_app_01", "type": "vm_app", "label": "VM-APP-01 (Tomcat)", "vlan": 20 }
+          ]
+        },
+        {
+          "id": "esxi_host_02",
+          "label": "Host VMware ESXi 02 – Dell PowerEdge R740xd",
+          "type": "compute",
+          "ports": ["vmnic0","vmnic1","vmnic2","vmnic3"],
+          "specs": { "cpu": "2x Xeon Gold 6248R", "ram": "768GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_db_01",     "type": "vm_db",      "label": "VM-DB-01 (MySQL Master)", "vlan": 30 },
+            { "vm_id": "vm_db_02",     "type": "vm_db",      "label": "VM-DB-02 (MySQL Slave)",  "vlan": 30 },
+            { "vm_id": "vm_vpn_01",    "type": "vm_vpn",     "label": "VM-VPN-01 (pfSense)",     "vlan": 60 }
+          ]
+        },
+        {
+          "id": "esxi_host_03",
+          "label": "Host VMware ESXi 03 – Dell PowerEdge R640",
+          "type": "compute",
+          "ports": ["vmnic0","vmnic1"],
+          "specs": { "cpu": "2x Xeon Silver 4215R", "ram": "384GB", "hypervisor": "VMware ESXi 8" },
+          "virtual_machines": [
+            { "vm_id": "vm_monitor_01","type": "vm_monitor", "label": "VM-Zabbix (Monitoramento)", "vlan": 40 },
+            { "vm_id": "vm_backup_01", "type": "vm_backup",  "label": "VM-Veeam (Backup)",         "vlan": 40 }
+          ]
+        },
+        {
+          "id": "san_netapp_fas2750",
+          "label": "Storage NetApp FAS2750 (SAN/NAS)",
+          "type": "storage",
+          "ports": ["e0a","e0b","e0c","e0d"],
+          "specs": { "protocol": "iSCSI/NFS/CIFS", "capacity": "192TB", "ha_pair": true }
+        },
+        {
+          "id": "lb_f5_ltm_2000",
+          "label": "Load Balancer F5 BIG-IP LTM 2000s",
+          "type": "network",
+          "ports": ["ext_self","int_self1","int_self2","mgmt"],
+          "specs": { "throughput": "10Gbps", "ssl_tps": 75000, "protocols": "HTTP/HTTPS/TCP" }
+        },
+        {
+          "id": "ups_eaton_9px",
+          "label": "No-break Eaton 9PX 11000VA (Rack)",
+          "type": "power",
+          "ports": ["mgmt_eth"],
+          "specs": { "power": "11000VA", "runtime": "20min full load", "epdu": true }
+        }
+      ],
+      "connections_required": [
+        { "from": "isp_primary.out",                 "to": "fw_fortinet_200f.wan1",             "cable": "fiber_lc",   "note": "ISP Vivo → FW WAN1" },
+        { "from": "isp_secondary.out",               "to": "fw_fortinet_200f.wan2",             "cable": "fiber_lc",   "note": "ISP Claro → FW WAN2 (failover)" },
+        { "from": "fw_fortinet_200f.lan1",           "to": "switch_core_cisco_9500.uplink1",    "cable": "fiber_qsfp", "note": "FW LAN → Core Switch (100Gbps)" },
+        { "from": "fw_fortinet_200f.dmz1",           "to": "lb_f5_ltm_2000.ext_self",           "cable": "sfp_plus",   "note": "FW DMZ → Load Balancer (entrada)" },
+        { "from": "lb_f5_ltm_2000.int_self1",        "to": "switch_core_cisco_9500.sfp1",       "cable": "sfp_plus",   "note": "Load Balancer → Core (VLAN 10 Web)" },
+        { "from": "switch_core_cisco_9500.qsfp1",    "to": "esxi_host_01.vmnic0",               "cable": "fiber_qsfp", "note": "Core → ESXi-01 NIC0 (100Gbps)" },
+        { "from": "switch_core_cisco_9500.qsfp2",    "to": "esxi_host_01.vmnic1",               "cable": "fiber_qsfp", "note": "Core → ESXi-01 NIC1 (redundância)" },
+        { "from": "switch_core_cisco_9500.qsfp3",    "to": "esxi_host_02.vmnic0",               "cable": "fiber_qsfp", "note": "Core → ESXi-02 NIC0 (100Gbps)" },
+        { "from": "switch_core_cisco_9500.qsfp4",    "to": "esxi_host_02.vmnic1",               "cable": "fiber_qsfp", "note": "Core → ESXi-02 NIC1 (redundância)" },
+        { "from": "switch_core_cisco_9500.sfp2",     "to": "esxi_host_03.vmnic0",               "cable": "sfp_plus",   "note": "Core → ESXi-03 NIC0 (10Gbps)" },
+        { "from": "switch_core_cisco_9500.sfp3",     "to": "esxi_host_03.vmnic1",               "cable": "sfp_plus",   "note": "Core → ESXi-03 NIC1 (redundância)" },
+        { "from": "switch_core_cisco_9500.sfp4",     "to": "san_netapp_fas2750.e0a",            "cable": "sfp_plus",   "note": "Core → NetApp e0a (iSCSI)" },
+        { "from": "switch_core_cisco_9500.sfp5",     "to": "san_netapp_fas2750.e0b",            "cable": "sfp_plus",   "note": "Core → NetApp e0b (iSCSI redundância)" },
+        { "from": "switch_core_cisco_9500.sfp6",     "to": "san_netapp_fas2750.e0c",            "cable": "sfp_plus",   "note": "Core → NetApp e0c (NFS para ESXi)" },
+        { "from": "switch_core_cisco_9500.uplink2",  "to": "switch_dist_cisco_9300_01.uplink1", "cable": "sfp_plus",   "note": "Core → Distribuição 01 (acesso de usuários)" },
+        { "from": "switch_core_cisco_9500.uplink2",  "to": "switch_dist_cisco_9300_02.uplink1", "cable": "sfp_plus",   "note": "Core → Distribuição 02 (redundância de acesso)" },
+        { "from": "switch_dist_cisco_9300_01.port1", "to": "ups_eaton_9px.mgmt_eth",            "cable": "cat6",       "note": "Gerenciamento do No-break" }
+      ],
+      "rules": [
+        "Os servidores web (VM-WEB) devem estar na DMZ, atrás do Load Balancer F5",
+        "O banco de dados (VM-DB) nunca deve ter acesso direto da internet",
+        "O storage NetApp deve ter pelo menos 3 links com MPIO para garantir desempenho",
+        "O link entre FW e Core deve ser 100Gbps (QSFP28)",
+        "Os dois switches de distribuição devem ser redundantes (STP/RSTP)",
+        "Cada host ESXi deve ter NIC Teaming de 2 interfaces físicas",
+        "A VLAN de monitoramento (Zabbix) deve ter visibilidade de todas as outras VLANs"
+      ],
+      "vlans": [
+        { "id": 10,  "name": "VLAN DMZ / Web",         "devices": ["vm_web_01","vm_web_02"] },
+        { "id": 20,  "name": "VLAN Aplicação",          "devices": ["vm_app_01"] },
+        { "id": 30,  "name": "VLAN Banco de Dados",     "devices": ["vm_db_01","vm_db_02"] },
+        { "id": 40,  "name": "VLAN Gerenciamento",      "devices": ["vm_monitor_01","vm_backup_01","ups_eaton_9px"] },
+        { "id": 50,  "name": "VLAN Storage / vMotion",  "devices": ["san_netapp_fas2750"] },
+        { "id": 60,  "name": "VLAN VPN / WAN",          "devices": ["vm_vpn_01"] },
+        { "id": 100, "name": "VLAN Usuários Corp.",      "devices": [] }
+      ],
+      "virtual_machines": [
+        { "host": "esxi_host_01", "vm_id": "vm_web_01",     "vlan": 10 },
+        { "host": "esxi_host_01", "vm_id": "vm_web_02",     "vlan": 10 },
+        { "host": "esxi_host_01", "vm_id": "vm_app_01",     "vlan": 20 },
+        { "host": "esxi_host_02", "vm_id": "vm_db_01",      "vlan": 30 },
+        { "host": "esxi_host_02", "vm_id": "vm_db_02",      "vlan": 30 },
+        { "host": "esxi_host_02", "vm_id": "vm_vpn_01",     "vlan": 60 },
+        { "host": "esxi_host_03", "vm_id": "vm_monitor_01", "vlan": 40 },
+        { "host": "esxi_host_03", "vm_id": "vm_backup_01",  "vlan": 40 }
+      ]
+    },
+
+    {
+      "id": 6,
+      "tier": "Empresa Multinacional",
+      "name": "Data Center Tier III – Infraestrutura Multi-Site",
+      "difficulty": "expert",
+      "description": "Infraestrutura Tier III com redundância N+1 em todos os componentes, dois sites (ativo-ativo), conectados via MPLS, Ceph Storage distribuído, VMware vSphere com vSAN, balanceamento global de DNS e NOC dedicado.",
+      "sites": ["site_sp", "site_rj"],
+      "inventory": [
+        {
+          "id": "isp1_vivo_site_sp",
+          "label": "[SP] ISP Vivo Empresas – IP Transit 10Gbps",
+          "type": "telecom",
+          "site": "site_sp",
+          "ports": ["out"],
+          "specs": { "speed": "10Gbps", "asn": "AS7738", "bgp": true }
+        },
+        {
+          "id": "isp2_claro_site_sp",
+          "label": "[SP] ISP Claro Empresas – IP Transit 10Gbps",
+          "type": "telecom",
+          "site": "site_sp",
+          "ports": ["out"],
+          "specs": { "speed": "10Gbps", "asn": "AS28573", "bgp": true }
+        },
+        {
+          "id": "mpls_link_sp_rj",
+          "label": "Link MPLS SP↔RJ – Embratel (10Gbps)",
+          "type": "telecom",
+          "ports": ["sp_out", "rj_out"],
+          "specs": { "speed": "10Gbps", "latency": "8ms", "sla": "99,99%" }
+        },
+        {
+          "id": "router_bgp_cisco_asr1001",
+          "label": "[SP] Roteador Border Cisco ASR 1001-X (BGP)",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["wan1","wan2","lan1","lan2"],
+          "specs": { "throughput": "20Gbps", "bgp": true, "mpls": true, "redundancy": "HSRP" }
+        },
+        {
+          "id": "fw_paloalto_5220",
+          "label": "[SP] Firewall Palo Alto PA-5220 (HA Cluster)",
+          "type": "security",
+          "site": "site_sp",
+          "ports": ["wan1","wan2","lan1","lan2","dmz","ha1","ha2","mgmt"],
+          "specs": { "throughput": "20Gbps", "ha": "Active/Active", "sessions": "64M" }
+        },
+        {
+          "id": "switch_core_juniper_ex9214",
+          "label": "[SP] Switch Core Juniper EX9214 (Virtual Chassis)",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["uplink1","uplink2","qsfp1","qsfp2","qsfp3","qsfp4","qsfp5","qsfp6","qsfp7","qsfp8","sfp1","sfp2","sfp3","sfp4"],
+          "specs": { "ports": "14 slots", "fabric": "2,8Tbps", "virtual_chassis": true }
+        },
+        {
+          "id": "switch_dist_arista_7280r_01",
+          "label": "[SP] Switch Distribuição Arista 7280R #1",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["uplink1","uplink2","sfp1","sfp2","sfp3","sfp4","sfp5","sfp6","port1","port2","port3","port4"],
+          "specs": { "ports": 48, "speed": "100Gbps uplink" }
+        },
+        {
+          "id": "switch_dist_arista_7280r_02",
+          "label": "[SP] Switch Distribuição Arista 7280R #2",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["uplink1","uplink2","sfp1","sfp2","sfp3","sfp4","sfp5","sfp6","port1","port2","port3","port4"],
+          "specs": { "ports": 48, "speed": "100Gbps uplink" }
+        },
+        {
+          "id": "blade_chassis_hp_c7000",
+          "label": "[SP] Chassis Blade HP BladeSystem c7000",
+          "type": "compute",
+          "site": "site_sp",
+          "ports": ["vc_eth1","vc_eth2","vc_fc1","vc_fc2"],
+          "specs": { "blades": 16, "interconnects": "HP Virtual Connect 10Gb", "power_modules": 6 },
+          "blades": [
+            {
+              "blade_id": "blade_sp_01",
+              "label": "Blade SP-01 HP ProLiant BL460c Gen10",
+              "ports": ["nic1","nic2"],
+              "specs": { "cpu": "2x Xeon Gold 6252", "ram": "512GB", "hypervisor": "VMware ESXi 8" },
+              "virtual_machines": [
+                { "vm_id": "vm_web_sp_01","type":"vm_web",  "label":"VM-WEB-SP-01","vlan": 10 },
+                { "vm_id": "vm_web_sp_02","type":"vm_web",  "label":"VM-WEB-SP-02","vlan": 10 },
+                { "vm_id": "vm_app_sp_01","type":"vm_app",  "label":"VM-APP-SP-01","vlan": 20 },
+                { "vm_id": "vm_app_sp_02","type":"vm_app",  "label":"VM-APP-SP-02","vlan": 20 }
+              ]
+            },
+            {
+              "blade_id": "blade_sp_02",
+              "label": "Blade SP-02 HP ProLiant BL460c Gen10",
+              "ports": ["nic1","nic2"],
+              "specs": { "cpu": "2x Xeon Gold 6252", "ram": "512GB", "hypervisor": "VMware ESXi 8" },
+              "virtual_machines": [
+                { "vm_id": "vm_db_sp_01",   "type":"vm_db",     "label":"VM-DB-SP-01 (Oracle RAC node 1)","vlan": 30 },
+                { "vm_id": "vm_db_sp_02",   "type":"vm_db",     "label":"VM-DB-SP-02 (Oracle RAC node 2)","vlan": 30 },
+                { "vm_id": "vm_vpn_sp_01",  "type":"vm_vpn",    "label":"VM-VPN-SP-01","vlan": 60 }
+              ]
+            },
+            {
+              "blade_id": "blade_sp_03",
+              "label": "Blade SP-03 HP ProLiant BL460c Gen10 (NOC/Mgmt)",
+              "ports": ["nic1","nic2"],
+              "specs": { "cpu": "2x Xeon Gold 6226R", "ram": "256GB", "hypervisor": "VMware ESXi 8" },
+              "virtual_machines": [
+                { "vm_id": "vm_noc_zabbix", "type":"vm_monitor","label":"VM-Zabbix-Server",        "vlan": 40 },
+                { "vm_id": "vm_noc_grafana","type":"vm_monitor","label":"VM-Grafana (Dashboard)",   "vlan": 40 },
+                { "vm_id": "vm_backup_veeam","type":"vm_backup","label":"VM-Veeam B&R v12",         "vlan": 40 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "san_pure_storage_fa500",
+          "label": "[SP] Storage Pure Storage FlashArray//50",
+          "type": "storage",
+          "site": "site_sp",
+          "ports": ["eth0","eth1","eth2","eth3","fc0","fc1"],
+          "specs": { "capacity": "960TB effective", "protocol": "FC/iSCSI/NVMe-oF", "latency": "<1ms", "ha": "Active/Active controllers" }
+        },
+        {
+          "id": "fc_switch_brocade_g620_01",
+          "label": "[SP] SAN Switch Brocade G620 #1 (Fibre Channel)",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["port1","port2","port3","port4","port5","port6","port7","port8"],
+          "specs": { "ports": 64, "speed": "32Gbps FC", "zoning": true }
+        },
+        {
+          "id": "fc_switch_brocade_g620_02",
+          "label": "[SP] SAN Switch Brocade G620 #2 (Fibre Channel)",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["port1","port2","port3","port4","port5","port6","port7","port8"],
+          "specs": { "ports": 64, "speed": "32Gbps FC", "zoning": true }
+        },
+        {
+          "id": "lb_citrix_adc_mpx_8900",
+          "label": "[SP] Load Balancer Citrix ADC MPX 8900",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["dmz_in","app_out1","app_out2","mgmt"],
+          "specs": { "throughput": "40Gbps", "ssl_tps": 500000, "gslb": true }
+        },
+        {
+          "id": "oob_mgmt_switch",
+          "label": "[SP] Switch OOB Mgmt Cisco Catalyst 2960-L-8PS",
+          "type": "network",
+          "site": "site_sp",
+          "ports": ["port1","port2","port3","port4","port5","port6","port7","port8"],
+          "specs": { "ports": 8, "poe": true, "purpose": "Out-of-Band Management" }
+        },
+        {
+          "id": "ups_site_sp",
+          "label": "[SP] No-break Schneider APC Symmetra PX 100kVA",
+          "type": "power",
+          "site": "site_sp",
+          "ports": ["mgmt_eth1","mgmt_eth2"],
+          "specs": { "power": "100kVA", "runtime": "15min full load", "scalable": true }
+        }
+      ],
+      "connections_required": [
+        { "from": "isp1_vivo_site_sp.out",             "to": "router_bgp_cisco_asr1001.wan1",          "cable": "fiber_lc",   "note": "ISP Vivo 10G → BGP Router" },
+        { "from": "isp2_claro_site_sp.out",            "to": "router_bgp_cisco_asr1001.wan2",          "cable": "fiber_lc",   "note": "ISP Claro 10G → BGP Router (Multihoming)" },
+        { "from": "mpls_link_sp_rj.sp_out",            "to": "router_bgp_cisco_asr1001.lan2",          "cable": "fiber_lc",   "note": "MPLS SP↔RJ → BGP Router (site-to-site)" },
+        { "from": "router_bgp_cisco_asr1001.lan1",     "to": "fw_paloalto_5220.wan1",                  "cable": "fiber_qsfp", "note": "BGP Router → FW WAN (100Gbps)" },
+        { "from": "fw_paloalto_5220.lan1",             "to": "switch_core_juniper_ex9214.uplink1",     "cable": "fiber_qsfp", "note": "FW LAN → Core Juniper (100Gbps)" },
+        { "from": "fw_paloalto_5220.dmz",              "to": "lb_citrix_adc_mpx_8900.dmz_in",         "cable": "sfp_plus",   "note": "FW DMZ → Load Balancer Citrix" },
+        { "from": "lb_citrix_adc_mpx_8900.app_out1",   "to": "switch_core_juniper_ex9214.sfp1",        "cable": "sfp_plus",   "note": "LB → Core (VLAN 10 Web)" },
+        { "from": "lb_citrix_adc_mpx_8900.app_out2",   "to": "switch_core_juniper_ex9214.sfp2",        "cable": "sfp_plus",   "note": "LB → Core (VLAN 20 App)" },
+        { "from": "switch_core_juniper_ex9214.qsfp1",  "to": "blade_chassis_hp_c7000.vc_eth1",         "cable": "fiber_qsfp", "note": "Core → Blade Chassis VC (Fabric A)" },
+        { "from": "switch_core_juniper_ex9214.qsfp2",  "to": "blade_chassis_hp_c7000.vc_eth2",         "cable": "fiber_qsfp", "note": "Core → Blade Chassis VC (Fabric B)" },
+        { "from": "switch_core_juniper_ex9214.qsfp3",  "to": "switch_dist_arista_7280r_01.uplink1",    "cable": "fiber_qsfp", "note": "Core → Distribuição Arista 01" },
+        { "from": "switch_core_juniper_ex9214.qsfp4",  "to": "switch_dist_arista_7280r_02.uplink1",    "cable": "fiber_qsfp", "note": "Core → Distribuição Arista 02 (redundância)" },
+        { "from": "switch_core_juniper_ex9214.sfp3",   "to": "san_pure_storage_fa500.eth0",            "cable": "sfp_plus",   "note": "Core → Pure Storage (iSCSI/NVMe-oF path A)" },
+        { "from": "switch_core_juniper_ex9214.sfp4",   "to": "san_pure_storage_fa500.eth1",            "cable": "sfp_plus",   "note": "Core → Pure Storage (iSCSI/NVMe-oF path B)" },
+        { "from": "blade_chassis_hp_c7000.vc_fc1",     "to": "fc_switch_brocade_g620_01.port1",        "cable": "fiber_lc",   "note": "Blade Chassis FC → SAN Fabric A (32Gbps)" },
+        { "from": "blade_chassis_hp_c7000.vc_fc2",     "to": "fc_switch_brocade_g620_02.port1",        "cable": "fiber_lc",   "note": "Blade Chassis FC → SAN Fabric B (redundância)" },
+        { "from": "fc_switch_brocade_g620_01.port2",   "to": "san_pure_storage_fa500.fc0",             "cable": "fiber_lc",   "note": "SAN Fabric A → Pure Storage FC" },
+        { "from": "fc_switch_brocade_g620_02.port2",   "to": "san_pure_storage_fa500.fc1",             "cable": "fiber_lc",   "note": "SAN Fabric B → Pure Storage FC (redundância)" },
+        { "from": "oob_mgmt_switch.port1",             "to": "switch_core_juniper_ex9214.uplink2",     "cable": "cat6",       "note": "OOB → Core Switch (mgmt out-of-band)" },
+        { "from": "oob_mgmt_switch.port2",             "to": "fw_paloalto_5220.mgmt",                  "cable": "cat6",       "note": "OOB → FW (mgmt port)" },
+        { "from": "oob_mgmt_switch.port3",             "to": "router_bgp_cisco_asr1001.lan2",          "cable": "cat6",       "note": "OOB → BGP Router (mgmt)" },
+        { "from": "oob_mgmt_switch.port4",             "to": "ups_site_sp.mgmt_eth1",                  "cable": "cat6",       "note": "OOB → No-break (gerenciamento)" }
+      ],
+      "rules": [
+        "BGP Multihoming obrigatório: dois ISPs distintos com ASN separados",
+        "Link MPLS dedicado para comunicação entre sites SP e RJ",
+        "Dois fabrics FC independentes (Fabric A e B) para zero single-point-of-failure no storage",
+        "Pure Storage deve ser acessado via Fibre Channel E iSCSI (dual protocol para redundância)",
+        "OOB Management Network deve estar completamente isolada da rede de produção",
+        "Blade Chassis deve usar Virtual Connect para garantir mobilidade de workload",
+        "Load Balancer Citrix deve ter GSLB configurado para failover entre sites SP e RJ",
+        "Todos os hosts blade devem ter 2 conexões físicas ao Virtual Connect (dual-fabric)"
+      ],
+      "vlans": [
+        { "id": 10,  "name": "VLAN DMZ Web",             "devices": ["vm_web_sp_01","vm_web_sp_02"] },
+        { "id": 20,  "name": "VLAN Aplicação",            "devices": ["vm_app_sp_01","vm_app_sp_02"] },
+        { "id": 30,  "name": "VLAN Banco de Dados",       "devices": ["vm_db_sp_01","vm_db_sp_02"] },
+        { "id": 40,  "name": "VLAN Gerenciamento / NOC",  "devices": ["vm_noc_zabbix","vm_noc_grafana","vm_backup_veeam"] },
+        { "id": 50,  "name": "VLAN Storage / vMotion",    "devices": ["san_pure_storage_fa500","blade_chassis_hp_c7000"] },
+        { "id": 60,  "name": "VLAN VPN / WAN Inter-Site", "devices": ["vm_vpn_sp_01"] },
+        { "id": 999, "name": "VLAN OOB Management",       "devices": ["oob_mgmt_switch","ups_site_sp"] }
+      ],
+      "virtual_machines": [
+        { "host": "blade_sp_01", "vm_id": "vm_web_sp_01",   "vlan": 10 },
+        { "host": "blade_sp_01", "vm_id": "vm_web_sp_02",   "vlan": 10 },
+        { "host": "blade_sp_01", "vm_id": "vm_app_sp_01",   "vlan": 20 },
+        { "host": "blade_sp_01", "vm_id": "vm_app_sp_02",   "vlan": 20 },
+        { "host": "blade_sp_02", "vm_id": "vm_db_sp_01",    "vlan": 30 },
+        { "host": "blade_sp_02", "vm_id": "vm_db_sp_02",    "vlan": 30 },
+        { "host": "blade_sp_02", "vm_id": "vm_vpn_sp_01",   "vlan": 60 },
+        { "host": "blade_sp_03", "vm_id": "vm_noc_zabbix",  "vlan": 40 },
+        { "host": "blade_sp_03", "vm_id": "vm_noc_grafana", "vlan": 40 },
+        { "host": "blade_sp_03", "vm_id": "vm_backup_veeam","vlan": 40 }
       ]
     },
 
     {
       "id": 7,
-      "name": "Segmentação com VLAN",
-      "difficulty": "medium",
+      "tier": "Tier 1",
+      "name": "Hyperscale Data Center – Infraestrutura de Provedor de Nuvem",
+      "difficulty": "extreme",
+      "description": "Data Center Tier IV de provedor cloud. Spine-Leaf fabric com BGP EVPN/VXLAN, múltiplos PoDs de servidores, storage distribuído Ceph, redundância 2N em energia, refrigeração líquida direta e NOC 24x7. Baseado em arquiteturas reais da AWS/Azure/GCP em escala regional.",
+      "architecture_pattern": "Spine-Leaf (Clos Network) com BGP EVPN/VXLAN",
       "inventory": [
-        { "id": "router", "type": "network", "ports": ["wan_in", "lan_out"] },
-        { "id": "switch_managed", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3", "lan4"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] },
-        { "id": "camera", "type": "security", "ports": ["eth0"] }
+        {
+          "id": "isp_transit_cogent",
+          "label": "Transit ISP Cogent – 100Gbps (BGP AS174)",
+          "type": "telecom",
+          "ports": ["out"],
+          "specs": { "speed": "100Gbps", "asn": "AS174", "peering": true }
+        },
+        {
+          "id": "isp_transit_level3",
+          "label": "Transit ISP Lumen/Level3 – 100Gbps (BGP AS3549)",
+          "type": "telecom",
+          "ports": ["out"],
+          "specs": { "speed": "100Gbps", "asn": "AS3549", "peering": true }
+        },
+        {
+          "id": "isp_peering_pttosp",
+          "label": "Peering PTT.br São Paulo (IX.br) – 100Gbps",
+          "type": "telecom",
+          "ports": ["out"],
+          "specs": { "speed": "100Gbps", "type": "IXP", "peers": "1200+" }
+        },
+        {
+          "id": "router_border_01",
+          "label": "Roteador Border Cisco NCS 5501 #1 (BGP/MPLS)",
+          "type": "network",
+          "ports": ["wan1","wan2","peering","core1","core2"],
+          "specs": { "throughput": "400Gbps", "bgp_paths": "1M+", "segment_routing": true }
+        },
+        {
+          "id": "router_border_02",
+          "label": "Roteador Border Cisco NCS 5501 #2 (BGP/MPLS)",
+          "type": "network",
+          "ports": ["wan1","wan2","peering","core1","core2"],
+          "specs": { "throughput": "400Gbps", "bgp_paths": "1M+", "segment_routing": true }
+        },
+        {
+          "id": "fw_cluster_fortinet_7121f",
+          "label": "Firewall Cluster FortiGate 7121F (VDOM / HA)",
+          "type": "security",
+          "ports": ["wan1","wan2","lan1","lan2","lan3","lan4","ha1","ha2"],
+          "specs": { "throughput": "400Gbps", "vdoms": 500, "sessions": "2.56B", "ha": "Active/Active" }
+        },
+        {
+          "id": "spine_01_arista_7800r3",
+          "label": "Spine 01 – Arista 7800R3 (400Gbps QSFP-DD)",
+          "type": "network",
+          "ports": ["uplink1","uplink2","leaf1","leaf2","leaf3","leaf4","leaf5","leaf6","leaf7","leaf8"],
+          "specs": { "fabric": "32Tbps", "ports": "128x 400GbE", "protocol": "BGP EVPN" }
+        },
+        {
+          "id": "spine_02_arista_7800r3",
+          "label": "Spine 02 – Arista 7800R3 (400Gbps QSFP-DD)",
+          "type": "network",
+          "ports": ["uplink1","uplink2","leaf1","leaf2","leaf3","leaf4","leaf5","leaf6","leaf7","leaf8"],
+          "specs": { "fabric": "32Tbps", "ports": "128x 400GbE", "protocol": "BGP EVPN" }
+        },
+        {
+          "id": "spine_03_arista_7800r3",
+          "label": "Spine 03 – Arista 7800R3 (redundância N+1)",
+          "type": "network",
+          "ports": ["uplink1","uplink2","leaf1","leaf2","leaf3","leaf4","leaf5","leaf6","leaf7","leaf8"],
+          "specs": { "fabric": "32Tbps", "ports": "128x 400GbE", "protocol": "BGP EVPN" }
+        },
+        {
+          "id": "leaf_pod_a_01",
+          "label": "Leaf PoD-A #01 – Arista 7280CR3 (ToR Switch)",
+          "type": "network",
+          "ports": ["spine1","spine2","spine3","srv1","srv2","srv3","srv4","srv5","srv6","srv7","srv8"],
+          "specs": { "ports": "32x 100GbE + 8x 400GbE uplinks", "protocol": "BGP EVPN/VXLAN" }
+        },
+        {
+          "id": "leaf_pod_a_02",
+          "label": "Leaf PoD-A #02 – Arista 7280CR3 (ToR Switch)",
+          "type": "network",
+          "ports": ["spine1","spine2","spine3","srv1","srv2","srv3","srv4","srv5","srv6","srv7","srv8"],
+          "specs": { "ports": "32x 100GbE + 8x 400GbE uplinks", "protocol": "BGP EVPN/VXLAN" }
+        },
+        {
+          "id": "compute_pod_a_srv_01",
+          "label": "Compute PoD-A #01 – Supermicro SYS-221H-TNR",
+          "type": "compute",
+          "ports": ["nic0","nic1","ipmi"],
+          "specs": { "cpu": "2x AMD EPYC 9654 (192 cores total)", "ram": "3TB DDR5", "nvme": "8x 7.68TB NVMe", "hypervisor": "Proxmox VE 8 / KVM" },
+          "virtual_machines": [
+            { "vm_id": "vm_cust_a_web_01","type":"vm_web","label":"Customer-A VM-WEB-01","vlan":1010 },
+            { "vm_id": "vm_cust_a_web_02","type":"vm_web","label":"Customer-A VM-WEB-02","vlan":1010 },
+            { "vm_id": "vm_cust_b_app_01","type":"vm_app","label":"Customer-B VM-APP-01","vlan":2010 },
+            { "vm_id": "vm_cust_c_db_01", "type":"vm_db", "label":"Customer-C VM-DB-01", "vlan":3030 }
+          ]
+        },
+        {
+          "id": "compute_pod_a_srv_02",
+          "label": "Compute PoD-A #02 – Supermicro SYS-221H-TNR",
+          "type": "compute",
+          "ports": ["nic0","nic1","ipmi"],
+          "specs": { "cpu": "2x AMD EPYC 9654", "ram": "3TB DDR5", "nvme": "8x 7.68TB NVMe", "hypervisor": "Proxmox VE 8 / KVM" },
+          "virtual_machines": [
+            { "vm_id": "vm_cust_a_db_01", "type":"vm_db",     "label":"Customer-A VM-DB-01",  "vlan":1030 },
+            { "vm_id": "vm_cust_d_web_01","type":"vm_web",    "label":"Customer-D VM-WEB-01",  "vlan":4010 },
+            { "vm_id": "vm_infra_mon_01", "type":"vm_monitor","label":"VM-Prometheus+Grafana",  "vlan":9040 }
+          ]
+        },
+        {
+          "id": "compute_pod_a_srv_03",
+          "label": "Compute PoD-A #03 – Supermicro SYS-221H-TNR",
+          "type": "compute",
+          "ports": ["nic0","nic1","ipmi"],
+          "specs": { "cpu": "2x AMD EPYC 9654", "ram": "3TB DDR5", "nvme": "8x 7.68TB NVMe" },
+          "virtual_machines": [
+            { "vm_id": "vm_cust_b_db_01","type":"vm_db",    "label":"Customer-B VM-DB-01","vlan":2030 },
+            { "vm_id": "vm_cust_e_app_01","type":"vm_app",  "label":"Customer-E VM-APP-01","vlan":5010 }
+          ]
+        },
+        {
+          "id": "ceph_storage_node_01",
+          "label": "Ceph OSD Node #01 – 60x 18TB HDD + 4x NVMe (OSD)",
+          "type": "storage",
+          "ports": ["nic0","nic1"],
+          "specs": { "raw": "1.08PB", "role": "OSD", "network": "100GbE dual-homed" }
+        },
+        {
+          "id": "ceph_storage_node_02",
+          "label": "Ceph OSD Node #02 – 60x 18TB HDD + 4x NVMe (OSD)",
+          "type": "storage",
+          "ports": ["nic0","nic1"],
+          "specs": { "raw": "1.08PB", "role": "OSD", "network": "100GbE dual-homed" }
+        },
+        {
+          "id": "ceph_storage_node_03",
+          "label": "Ceph OSD Node #03 – 60x 18TB HDD + 4x NVMe (OSD)",
+          "type": "storage",
+          "ports": ["nic0","nic1"],
+          "specs": { "raw": "1.08PB", "role": "OSD", "network": "100GbE dual-homed" }
+        },
+        {
+          "id": "lb_cluster_f5_i10800",
+          "label": "Load Balancer F5 BIG-IP i10800 Cluster (GSLB + GTM)",
+          "type": "network",
+          "ports": ["ext1","ext2","int1","int2","mgmt"],
+          "specs": { "throughput": "80Gbps", "ssl_tps": "1.5M", "gslb": true, "adc": true }
+        },
+        {
+          "id": "oob_console_server",
+          "label": "Servidor de Console OOB – Lantronix SLC8000",
+          "type": "management",
+          "ports": ["eth0","console1","console2","console3","console4"],
+          "specs": { "console_ports": 48, "purpose": "Out-of-Band console access todos os equipamentos" }
+        },
+        {
+          "id": "dcim_server",
+          "label": "Servidor DCIM – Nlyte / Sunbird dcTrack",
+          "type": "management",
+          "ports": ["eth0"],
+          "specs": { "function": "Gerenciamento de ativos, energia, refrigeração, capacidade" }
+        },
+        {
+          "id": "pdu_rackmount_eaton_01",
+          "label": "ePDU Inteligente Eaton G3 (metered, 32A 3-fase) #1",
+          "type": "power",
+          "ports": ["mgmt_eth"],
+          "specs": { "outlets": 24, "monitoring": "por tomada", "remote_reboot": true }
+        },
+        {
+          "id": "pdu_rackmount_eaton_02",
+          "label": "ePDU Inteligente Eaton G3 (metered, 32A 3-fase) #2",
+          "type": "power",
+          "ports": ["mgmt_eth"],
+          "specs": { "outlets": 24, "monitoring": "por tomada", "remote_reboot": true }
+        }
       ],
       "connections_required": [
-        { "from": "router.lan_out", "to": "switch_managed.uplink", "cable": "cat6a" },
-        { "from": "switch_managed.lan1", "to": "server.eth0", "cable": "cat6" },
-        { "from": "switch_managed.lan2", "to": "camera.eth0", "cable": "cat6" }
+        { "from": "isp_transit_cogent.out",           "to": "router_border_01.wan1",           "cable": "fiber_qsfp", "note": "Cogent 100G → Border Router 01" },
+        { "from": "isp_transit_level3.out",           "to": "router_border_01.wan2",           "cable": "fiber_qsfp", "note": "Lumen 100G → Border Router 01" },
+        { "from": "isp_peering_pttosp.out",           "to": "router_border_02.peering",        "cable": "fiber_qsfp", "note": "IX.br Peering 100G → Border Router 02" },
+        { "from": "router_border_01.core1",           "to": "fw_cluster_fortinet_7121f.wan1",  "cable": "fiber_qsfp", "note": "Border 01 → FW Cluster" },
+        { "from": "router_border_02.core1",           "to": "fw_cluster_fortinet_7121f.wan2",  "cable": "fiber_qsfp", "note": "Border 02 → FW Cluster (redundância)" },
+        { "from": "fw_cluster_fortinet_7121f.lan1",   "to": "spine_01_arista_7800r3.uplink1",  "cable": "fiber_qsfp", "note": "FW → Spine-01 (400Gbps)" },
+        { "from": "fw_cluster_fortinet_7121f.lan2",   "to": "spine_02_arista_7800r3.uplink1",  "cable": "fiber_qsfp", "note": "FW → Spine-02 (400Gbps)" },
+        { "from": "fw_cluster_fortinet_7121f.lan3",   "to": "spine_03_arista_7800r3.uplink1",  "cable": "fiber_qsfp", "note": "FW → Spine-03 (N+1)" },
+        { "from": "fw_cluster_fortinet_7121f.dmz",    "to": "lb_cluster_f5_i10800.ext1",       "cable": "fiber_qsfp", "note": "FW DMZ → Load Balancer F5" },
+        { "from": "spine_01_arista_7800r3.leaf1",     "to": "leaf_pod_a_01.spine1",            "cable": "fiber_qsfp", "note": "Spine-01 → Leaf PoD-A-01 (400G)" },
+        { "from": "spine_02_arista_7800r3.leaf1",     "to": "leaf_pod_a_01.spine2",            "cable": "fiber_qsfp", "note": "Spine-02 → Leaf PoD-A-01 (400G)" },
+        { "from": "spine_03_arista_7800r3.leaf1",     "to": "leaf_pod_a_01.spine3",            "cable": "fiber_qsfp", "note": "Spine-03 → Leaf PoD-A-01 (N+1)" },
+        { "from": "spine_01_arista_7800r3.leaf2",     "to": "leaf_pod_a_02.spine1",            "cable": "fiber_qsfp", "note": "Spine-01 → Leaf PoD-A-02 (400G)" },
+        { "from": "spine_02_arista_7800r3.leaf2",     "to": "leaf_pod_a_02.spine2",            "cable": "fiber_qsfp", "note": "Spine-02 → Leaf PoD-A-02 (400G)" },
+        { "from": "spine_03_arista_7800r3.leaf2",     "to": "leaf_pod_a_02.spine3",            "cable": "fiber_qsfp", "note": "Spine-03 → Leaf PoD-A-02 (N+1)" },
+        { "from": "leaf_pod_a_01.srv1",               "to": "compute_pod_a_srv_01.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Compute-01 NIC0 (100G)" },
+        { "from": "leaf_pod_a_02.srv1",               "to": "compute_pod_a_srv_01.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Compute-01 NIC1 (redundância dual-homed)" },
+        { "from": "leaf_pod_a_01.srv2",               "to": "compute_pod_a_srv_02.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Compute-02 NIC0 (100G)" },
+        { "from": "leaf_pod_a_02.srv2",               "to": "compute_pod_a_srv_02.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Compute-02 NIC1 (dual-homed)" },
+        { "from": "leaf_pod_a_01.srv3",               "to": "compute_pod_a_srv_03.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Compute-03 NIC0" },
+        { "from": "leaf_pod_a_02.srv3",               "to": "compute_pod_a_srv_03.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Compute-03 NIC1 (dual-homed)" },
+        { "from": "leaf_pod_a_01.srv4",               "to": "ceph_storage_node_01.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Ceph OSD-01 (100G Storage Network)" },
+        { "from": "leaf_pod_a_02.srv4",               "to": "ceph_storage_node_01.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Ceph OSD-01 (dual-homed)" },
+        { "from": "leaf_pod_a_01.srv5",               "to": "ceph_storage_node_02.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Ceph OSD-02 (100G)" },
+        { "from": "leaf_pod_a_02.srv5",               "to": "ceph_storage_node_02.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Ceph OSD-02 (dual-homed)" },
+        { "from": "leaf_pod_a_01.srv6",               "to": "ceph_storage_node_03.nic0",       "cable": "fiber_qsfp", "note": "Leaf-A01 → Ceph OSD-03 (100G)" },
+        { "from": "leaf_pod_a_02.srv6",               "to": "ceph_storage_node_03.nic1",       "cable": "fiber_qsfp", "note": "Leaf-A02 → Ceph OSD-03 (dual-homed)" },
+        { "from": "oob_console_server.eth0",          "to": "spine_01_arista_7800r3.uplink2",  "cable": "cat6",       "note": "OOB → Spine-01 (mgmt)" },
+        { "from": "pdu_rackmount_eaton_01.mgmt_eth",  "to": "oob_console_server.console1",     "cable": "cat6",       "note": "ePDU-01 → OOB Console Server" },
+        { "from": "pdu_rackmount_eaton_02.mgmt_eth",  "to": "oob_console_server.console2",     "cable": "cat6",       "note": "ePDU-02 → OOB Console Server" },
+        { "from": "dcim_server.eth0",                 "to": "oob_console_server.eth0",         "cable": "cat6",       "note": "DCIM → OOB (gerenciamento centralizado)" }
       ],
       "rules": [
-        "Os dispositivos devem ser segmentados em VLANs diferentes",
-        "A VLAN do Servidor não deve ter acesso direto à VLAN de Câmeras"
-      ]
-    },
-    {
-      "id": 8,
-      "name": "Link Aggregation (LACP)",
-      "difficulty": "medium",
-      "inventory": [
-        { "id": "switch_core", "type": "network", "ports": ["uplink1", "uplink2", "lan1", "lan2"] },
-        { "id": "server", "type": "compute", "ports": ["eth0", "eth1"] }
+        "Arquitetura Spine-Leaf (Clos): cada Leaf deve ter uplink para TODOS os Spines (full mesh)",
+        "Cada servidor de computação deve ser dual-homed: NIC0 para Leaf-01, NIC1 para Leaf-02",
+        "BGP EVPN/VXLAN deve ser o plano de controle para todo o overlay de rede",
+        "BGP Multihoming com dois Transit ISPs e um IXP (IX.br) para redundância de roteamento externo",
+        "Ceph: mínimo 3 nós OSD para replicação triple (replica 3) e tolerância a falha de 1 nó",
+        "Rede OOB completamente separada para gerenciamento out-of-band de todos os equipamentos",
+        "ePDUs inteligentes em todos os racks com monitoramento por tomada",
+        "DCIM deve integrar dados de energia (PDU), temperatura (sensores) e inventário",
+        "Nenhum SPOF permitido: todos os componentes críticos devem ter redundância N+1 ou 2N"
       ],
-      "connections_required": [
-        { "from": "switch_core.uplink1", "to": "server.eth0", "cable": "cat6a" },
-        { "from": "switch_core.uplink2", "to": "server.eth1", "cable": "cat6a" }
+      "vlans": [
+        { "id": 1010, "name": "VXLAN VNI Customer-A Web",   "type": "VXLAN overlay" },
+        { "id": 1030, "name": "VXLAN VNI Customer-A DB",    "type": "VXLAN overlay" },
+        { "id": 2010, "name": "VXLAN VNI Customer-B App",   "type": "VXLAN overlay" },
+        { "id": 2030, "name": "VXLAN VNI Customer-B DB",    "type": "VXLAN overlay" },
+        { "id": 3030, "name": "VXLAN VNI Customer-C DB",    "type": "VXLAN overlay" },
+        { "id": 4010, "name": "VXLAN VNI Customer-D Web",   "type": "VXLAN overlay" },
+        { "id": 5010, "name": "VXLAN VNI Customer-E App",   "type": "VXLAN overlay" },
+        { "id": 9040, "name": "VLAN Infra Monitoramento",   "type": "underlay VLAN" },
+        { "id": 9090, "name": "VLAN Storage Ceph Cluster",  "type": "underlay VLAN" },
+        { "id": 9099, "name": "VLAN OOB Management",        "type": "underlay VLAN" }
       ],
-      "rules": [
-        "Ambos os links físicos devem estar ativos",
-        "A agregação (LACP) é necessária para atingir a largura de banda total"
-      ]
-    },
-    {
-      "id": 9,
-      "name": "Alta disponibilidade com 2 switches",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "switch1", "type": "network", "ports": ["uplink", "lan1", "lan2"] },
-        { "id": "switch2", "type": "network", "ports": ["uplink", "lan1", "lan2"] },
-        { "id": "server", "type": "compute", "ports": ["eth0", "eth1"] }
-      ],
-      "connections_required": [
-        { "from": "switch1.lan1", "to": "server.eth0", "cable": "cat6" },
-        { "from": "switch2.lan1", "to": "server.eth1", "cable": "cat6" }
-      ],
-      "rules": [
-        "O servidor deve permanecer online mesmo se um dos switches falhar",
-        "As conexões físicas devem ser redundantes"
-      ]
-    },
-    {
-      "id": 10,
-      "name": "Load Balancer",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "router", "type": "network", "ports": ["wan_in", "lan_out"] },
-        { "id": "load_balancer", "type": "network", "ports": ["in", "out1", "out2"] },
-        { "id": "server1", "type": "compute", "ports": ["eth0"] },
-        { "id": "server2", "type": "compute", "ports": ["eth0"] }
-      ],
-      "connections_required": [
-        { "from": "router.lan_out", "to": "load_balancer.in", "cable": "cat6a" },
-        { "from": "load_balancer.out1", "to": "server1.eth0", "cable": "cat6" },
-        { "from": "load_balancer.out2", "to": "server2.eth0", "cable": "cat6" }
-      ],
-      "rules": [
-        "O tráfego de rede deve ser distribuído entre os nós",
-        "Ambos os servidores de destino devem estar acessíveis"
-      ]
-    },
-    {
-      "id": 11,
-      "name": "Backbone com fibra",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "core_switch", "type": "network", "ports": ["fiber1", "fiber2"] },
-        { "id": "distribution_switch", "type": "network", "ports": ["fiber1", "lan1"] },
-        { "id": "server", "type": "compute", "ports": ["eth0"] }
-      ],
-      "connections_required": [
-        { "from": "core_switch.fiber1", "to": "distribution_switch.fiber1", "cable": "fiber" },
-        { "from": "distribution_switch.lan1", "to": "server.eth0", "cable": "cat6a" }
-      ],
-      "rules": [
-        "Fibra ótica deve ser obrigatoriamente usada no backbone",
-        "Cabos de cobre não são permitidos para links de infraestrutura core"
-      ]
-    },
-    {
-      "id": 12,
-      "name": "Data Center Tier Avançado",
-      "difficulty": "hard",
-      "inventory": [
-        { "id": "isp1", "type": "telecom", "ports": ["out"] },
-        { "id": "isp2", "type": "telecom", "ports": ["out"] },
-        { "id": "firewall", "type": "security", "ports": ["wan1", "wan2", "lan"] },
-        { "id": "core_switch", "type": "network", "ports": ["uplink", "lan1", "lan2", "lan3"] },
-        { "id": "server_cluster", "type": "compute", "ports": ["eth0", "eth1"] }
-      ],
-      "connections_required": [
-        { "from": "isp1.out", "to": "firewall.wan1", "cable": "fiber" },
-        { "from": "isp2.out", "to": "firewall.wan2", "cable": "fiber" },
-        { "from": "firewall.lan", "to": "core_switch.uplink", "cable": "fiber" },
-        { "from": "core_switch.lan1", "to": "server_cluster.eth0", "cable": "cat6a" },
-        { "from": "core_switch.lan2", "to": "server_cluster.eth1", "cable": "cat6a" }
-      ],
-      "rules": [
-        "Conexão redundante com dois ISPs é obrigatória",
-        "O sistema de failover deve estar funcional",
-        "O cluster de servidores deve possuir redundância total"
+      "virtual_machines": [
+        { "host": "compute_pod_a_srv_01", "vm_id": "vm_cust_a_web_01", "vxlan_vni": 1010 },
+        { "host": "compute_pod_a_srv_01", "vm_id": "vm_cust_a_web_02", "vxlan_vni": 1010 },
+        { "host": "compute_pod_a_srv_01", "vm_id": "vm_cust_b_app_01", "vxlan_vni": 2010 },
+        { "host": "compute_pod_a_srv_01", "vm_id": "vm_cust_c_db_01",  "vxlan_vni": 3030 },
+        { "host": "compute_pod_a_srv_02", "vm_id": "vm_cust_a_db_01",  "vxlan_vni": 1030 },
+        { "host": "compute_pod_a_srv_02", "vm_id": "vm_cust_d_web_01", "vxlan_vni": 4010 },
+        { "host": "compute_pod_a_srv_02", "vm_id": "vm_infra_mon_01",  "vlan": 9040 },
+        { "host": "compute_pod_a_srv_03", "vm_id": "vm_cust_b_db_01",  "vxlan_vni": 2030 },
+        { "host": "compute_pod_a_srv_03", "vm_id": "vm_cust_e_app_01", "vxlan_vni": 5010 }
       ]
     }
+
   ]
 }

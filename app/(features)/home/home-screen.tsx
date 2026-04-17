@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View, TouchableOpacity } from 'react-native';
 
 import { PanelCard } from '@/components/quiz/panel-card';

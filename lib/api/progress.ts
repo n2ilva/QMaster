@@ -236,7 +236,8 @@ async function _fetchUserProgressFromServer(
           completed: 0, 
           total: (DataCenterData.levels || DataCenterData.default?.levels || []).length,
           avgTime: 0,
-          avgMoves: 0
+          avgMoves: 0,
+          avgScore: 0
         }
       }
     };
@@ -436,6 +437,9 @@ async function _fetchUserProgressFromServer(
           : 0,
         avgMoves: Object.keys(dcProgress).length > 0 
           ? Object.values(dcProgress).reduce((acc: any, curr: any) => acc + curr.bestMoves, 0) / Object.keys(dcProgress).length 
+          : 0,
+        avgScore: Object.keys(dcProgress).length > 0 
+          ? Object.values(dcProgress).reduce((acc: any, curr: any) => acc + (curr.bestScore || 0), 0) / Object.keys(dcProgress).length 
           : 0
       }
     }

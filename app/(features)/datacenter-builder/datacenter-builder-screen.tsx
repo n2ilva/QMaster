@@ -1,6 +1,6 @@
 import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect, Circle, Line, Text as SvgText, G } from 'react-native-svg';
 import { 
   View, 
   Text, 
@@ -16,10 +16,8 @@ import {
 } from 'react-native';
 import { Audio } from 'expo-av';
 import { router } from 'expo-router';
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 import { useTabContentPadding, useTopContentPadding } from '@/hooks/use-tab-content-padding';
 import { StudyCompletionOverlay } from '../study-session/components/study-completion-overlay';
-import { QuizStatCard } from '@/components/quiz/stat-card';
 import { QUIZ_COLORS } from '@/constants/quiz-ui';
 import { useAuth } from '@/providers/auth-provider';
 import { saveDataCenterResult, fetchDataCenterProgress } from '@/lib/api/datacenter';
@@ -34,234 +32,36 @@ import {
   InventoryDevice
 } from './datacenter-builder.types';
 
-const { width } = Dimensions.get('window');
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const { width: windowWidth } = Dimensions.get('window');
 const data = RackData as unknown as DataCenterData;
-
-// --- Components ---
-
-type PortProps = {
-  portId: string;
-  deviceId: string;
-  isConnected: boolean;
-  isHighlighted: boolean;
-  onPress: () => void;
-  color: string;
-  blinkType: 'success' | 'error' | null;
-  blinkAnim: Animated.Value;
-  onLayout: (x: number, y: number) => void;
-};
-
-const Port = ({ portId, deviceId, isConnected, isHighlighted, onPress, color, blinkType, blinkAnim, onLayout }: PortProps) => {
-  const blinkColor = blinkAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['transparent', blinkType === 'success' ? '#22C55E88' : '#EF444488']
-  });
-
-  return (
-    <View 
-      onLayout={(e) => {
-        const { x, y, width, height } = e.nativeEvent.layout;
-        onLayout(x + width / 2, y + height / 2);
-      }}
-      style={{ position: 'relative' }}
-    >
-      <TouchableOpacity 
-        onPress={onPress}
-        activeOpacity={0.7}
-        onLayout={(e) => {
-          // This onLayout is easier to get center
-          // But it's relative to parent.
-        }}
-        style={[
-          styles.port, 
-          { borderColor: isHighlighted ? '#F59E0B' : (isConnected ? '#22C55E' : 'rgba(255,255,255,0.2)') },
-          isHighlighted && { backgroundColor: 'rgba(245,158,11,0.2)' },
-          isConnected && { backgroundColor: 'rgba(34,197,94,0.1)' }
-        ]}
-      >
-        {blinkType && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: blinkColor, borderRadius: 4, zIndex: 5 }]} />}
-        <View style={[styles.portHole, { backgroundColor: isConnected ? color : '#111' }]} />
-        <Text style={styles.portLabel}>{portId.toUpperCase()}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-type DeviceRowProps = {
-  device: InventoryDevice;
-  connections: ActiveConnection[];
-  selectedPort: { deviceId: string; port: string } | null;
-  onPortPress: (deviceId: string, port: string) => void;
-  cables: Cable[];
-  blinkingPorts: Record<string, 'success' | 'error'>;
-  blinkAnim: Animated.Value;
-  isPoweredOn: boolean;
-  diagnosisActive: boolean;
-  requiredConnections: any[];
-  expectedDeviceId: string;
-  onPortLayout: (portKey: string, x: number, y: number) => void;
-};
 
 const getDeviceIcon = (deviceId: string, type: string) => {
   const idLower = deviceId.toLowerCase();
   
   if (idLower.includes('modem') || idLower.includes('isp')) return 'modem';
-  if (idLower.includes('router')) return 'router-wireless';
+  if (idLower.includes('router') || idLower.includes('mikrotik')) return 'router-wireless';
+  if (idLower.includes('fw') || idLower.includes('firewall') || idLower.includes('fortinet') || idLower.includes('paloalto')) return 'shield-lock';
   if (idLower.includes('switch')) return 'switch';
-  if (idLower.includes('firewall')) return 'shield-lock';
-  if (idLower.includes('storage')) return 'database';
+  if (idLower.includes('storage') || idLower.includes('nas') || idLower.includes('synology') || idLower.includes('netapp')) return 'database';
   if (idLower.includes('camera')) return 'video-outline';
   if (idLower.includes('voip')) return 'phone-voip';
-  if (idLower.includes('load_balancer')) return 'transit-connection-variant';
+  if (idLower.includes('load_balancer') || idLower.includes('lb_f5') || idLower.includes('citrix')) return 'transit-connection-variant';
+  if (idLower.includes('ups') || idLower.includes('apc') || idLower.includes('eaton')) return 'battery-charging';
+  if (idLower.includes('ap_')) return 'wifi';
   
-  // Fallback by type
   switch (type) {
     case 'telecom': return 'modem';
     case 'network': return 'router';
     case 'security': return 'security';
     case 'storage': return 'database';
     case 'compute': return 'server';
+    case 'power': return 'battery';
+    case 'wireless': return 'wifi';
     default: return 'server';
   }
-};
-
-const DeviceRow = ({ 
-  device, 
-  connections, 
-  selectedPort, 
-  onPortPress, 
-  cables, 
-  blinkingPorts, 
-  blinkAnim, 
-  isPoweredOn,
-  diagnosisActive,
-  requiredConnections,
-  expectedDeviceId,
-  onPortLayout
-}: DeviceRowProps) => {
-  const [portsOffsetY, setPortsOffsetY] = useState(0);
-
-  const getPortColor = (portId: string) => {
-    const conn = connections.find(c => 
-      (c.from.deviceId === device.id && c.from.port === portId) || 
-      (c.to?.deviceId === device.id && c.to?.port === portId)
-    );
-    if (!conn) return '#555';
-    const cable = cables.find(cb => cb.id === conn.cableId);
-    return cable?.type === 'fiber' ? '#F43F5E' : (cable?.type === 'ethernet' ? '#3B82F6' : '#F59E0B');
-  };
-
-  const getDiagnostics = () => {
-    if (!diagnosisActive && !isPoweredOn) return 'off';
-    
-    // Check if the hardware itself is correct for this slot
-    if (device.id !== expectedDeviceId) return 'red';
-
-    // Check required connections involving this device
-    const reqs = requiredConnections.filter(r => r.from.startsWith(device.id) || r.to.startsWith(device.id));
-    if (reqs.length === 0) return isPoweredOn ? 'green' : 'off';
-
-    const metReqs = reqs.filter(req => {
-      return connections.some(conn => {
-        const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
-        const cTo = `${conn.to?.deviceId}.${conn.to?.port}`;
-        return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId;
-      });
-    });
-
-    // Check if there are "extra" or wrong connections on this device
-    const deviceConns = connections.filter(c => c.from.deviceId === device.id || c.to?.deviceId === device.id);
-    const hasErrorConnection = deviceConns.some(conn => {
-      const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
-      const cTo = `${conn.to?.deviceId}.${conn.to?.port}`;
-      return !requiredConnections.some(req => 
-        ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId
-      );
-    });
-
-    if (metReqs.length === reqs.length && !hasErrorConnection) return 'green';
-    if (metReqs.length > 0 || deviceConns.length > 0) return 'orange';
-    return 'red';
-  };
-
-  const diag = getDiagnostics();
-
-  return (
-    <View 
-      style={styles.deviceRow}
-      onLayout={(e) => {
-        // We could report Row Y here, but better in the screen loop
-      }}
-    >
-      <View style={styles.deviceHandle}><View style={styles.handleGrip}/></View>
-      <View style={styles.devicePanel}>
-        <View style={styles.deviceBrushedEffect} />
-        <View 
-          style={styles.deviceHeader}
-          onLayout={(e) => {
-            // Header height + margin affects ports Y
-            setPortsOffsetY(e.nativeEvent.layout.height + 8); 
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MaterialCommunityIcons name={getDeviceIcon(device.id, device.type) as any} size={14} color="#71717A" />
-            <Text style={styles.deviceName}>{device.id.toUpperCase()}</Text>
-          </View>
-          <View style={styles.ledsContainer}>
-            <Animated.View style={[
-              styles.led, 
-              diag === 'green' && styles.ledActiveGreen,
-              diag === 'orange' && { 
-                backgroundColor: '#F59E0B',
-                opacity: diag === 'orange' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.4] }) : 1
-              },
-              diag === 'red' && {
-                backgroundColor: '#EF4444',
-                opacity: diag === 'red' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1
-              }
-            ]} />
-             <Animated.View style={[
-              styles.led, 
-              diag === 'green' && styles.ledActiveGreen,
-              diag === 'orange' && { 
-                backgroundColor: '#F59E0B',
-                opacity: diag === 'orange' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.4] }) : 1
-              },
-              diag === 'red' && {
-                backgroundColor: '#EF4444',
-                opacity: diag === 'red' ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1
-              }
-            ]} />
-            <View style={styles.led} />
-          </View>
-        </View>
-        <View style={styles.portsContainer}>
-          {device.ports.map(port => {
-            const isSelected = selectedPort?.deviceId === device.id && selectedPort?.port === port;
-            const isConnected = connections.some(c => 
-              (c.from.deviceId === device.id && c.from.port === port) || 
-              (c.to?.deviceId === device.id && c.to?.port === port)
-            );
-            return (
-              <Port 
-                key={port}
-                portId={port}
-                deviceId={device.id}
-                isConnected={isConnected}
-                isHighlighted={isSelected}
-                onPress={() => onPortPress(device.id, port)}
-                color={getPortColor(port)}
-                blinkType={blinkingPorts?.[`${device.id}.${port}`] || null}
-                blinkAnim={blinkAnim}
-                onLayout={(x, y) => onPortLayout(`${device.id}.${port}`, x, y + portsOffsetY)}
-              />
-            );
-          })}
-        </View>
-      </View>
-      <View style={styles.deviceHandle}><View style={styles.handleGrip}/></View>
-    </View>
-  );
 };
 
 // --- Main Screen ---
@@ -281,7 +81,8 @@ export function DataCenterBuilderScreen() {
   
   // Game Flow States
   const [installedDevices, setInstalledDevices] = useState<Record<number, InventoryDevice>>({});
-  const [inventory, setInventory] = useState<InventoryDevice[]>([]);
+  const [showPhaseAlert, setShowPhaseAlert] = useState(false);
+  const [validationError, setValidationError] = useState<{ title: string; message: string } | null>(null);
   const [blinkSlot, setBlinkSlot] = useState<{ index: number, type: 'success' | 'error' } | null>(null);
   const [blinkingInventoryItem, setBlinkingInventoryItem] = useState<string | null>(null);
   const [blinkingPorts, setBlinkingPorts] = useState<Record<string, 'success' | 'error'>>({});
@@ -298,6 +99,8 @@ export function DataCenterBuilderScreen() {
   const [finished, setFinished] = useState(false);
   const [showCompletionEffect, setShowCompletionEffect] = useState(false);
   const [diagnosisActive, setDiagnosisActive] = useState(false);
+  const [finalScore, setFinalScore] = useState(100);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
   const [portPositions, setPortPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [rowPositions, setRowPositions] = useState<Record<number, number>>({});
   
@@ -358,27 +161,27 @@ export function DataCenterBuilderScreen() {
     setSourceNode(null);
     setSelectedCable(null);
     setInstalledDevices({});
-    setInventory([...level.inventory]);
     setStartTime(Date.now());
     setFinished(false);
     setMovements(0);
+    setDiagnosisActive(false);
+    setFinalScore(100);
+    setRecommendations([]);
+    setValidationError(null);
   };
 
-  const triggerBlinkSlot = (slotIndex: number, type: 'success' | 'error') => {
-    setBlinkSlot({ index: slotIndex, type });
-    Animated.sequence([
-      Animated.timing(blinkAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
-      Animated.timing(blinkAnim, { toValue: 0, duration: 400, useNativeDriver: false }),
-    ]).start(() => setBlinkSlot(null));
+  const goToNextLevel = () => {
+    if (!activeLevel) return;
+    const currentIndex = data.levels.findIndex(l => l.id === activeLevel.id);
+    const nextLevel = data.levels[currentIndex + 1];
+    if (nextLevel) {
+      handleLevelSelect(nextLevel);
+    } else {
+      setActiveLevel(null);
+    }
   };
 
-  const triggerBlinkInventoryItem = (deviceId: string) => {
-    setBlinkingInventoryItem(deviceId);
-    Animated.sequence([
-      Animated.timing(blinkAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
-      Animated.timing(blinkAnim, { toValue: 0, duration: 400, useNativeDriver: false }),
-    ]).start(() => setBlinkingInventoryItem(null));
-  };
+
 
   const triggerBlinkPort = (portKey1: string, portKey2: string, type: 'success' | 'error') => {
     setBlinkingPorts({ [portKey1]: type, [portKey2]: type });
@@ -392,13 +195,16 @@ export function DataCenterBuilderScreen() {
     if (selectedSlotForInstall === null || !activeLevel) return;
 
     setInstalledDevices(prev => ({ ...prev, [selectedSlotForInstall]: device }));
-    setInventory(prev => prev.filter(d => d.id !== device.id));
     setMovements(m => m + 1);
     setSelectedSlotForInstall(null);
+    setDiagnosisActive(false);
   };
 
   const handlePortPress = (deviceId: string, port: string) => {
-    if (!isHardwareInstalled) return;
+    if (!isHardwareInstalled) {
+      setShowPhaseAlert(true);
+      return;
+    }
 
     const existing = connections.find(c => (c.from.deviceId === deviceId && c.from.port === port) || (c.to?.deviceId === deviceId && c.to?.port === port));
     
@@ -448,52 +254,106 @@ export function DataCenterBuilderScreen() {
     setDiagnosisActive(false); // Reset diagnosis on change
   };
 
+  const handleUninstall = (index: number) => {
+    const device = installedDevices[index];
+    if (!device) return;
+    const newInstalled = { ...installedDevices };
+    delete newInstalled[index];
+    setInstalledDevices(newInstalled);
+    setMovements(m => m + 1);
+    setDiagnosisActive(false);
+  };
+
+  const getPortColor = (portId: string, devId: string) => {
+    const conn = connections.find(c => 
+      (c.from.deviceId === devId && c.from.port === portId) || 
+      (c.to?.deviceId === devId && c.to?.port === portId)
+    );
+    if (!conn) return '#555';
+    const cable = data.cables.find(cb => cb.id === conn.cableId);
+    if (cable?.type === 'fiber') return '#F43F5E';
+    if (cable?.type === 'direct_attach') return '#A855F7';
+    if (cable?.type === 'fiber_copper') return '#EAB308';
+    if (cable?.type === 'ethernet') return '#3B82F6';
+    return '#F59E0B';
+  };
+
   const removeConnection = (deviceId: string, port: string) => {
     setConnections(connections.filter(c => 
       !(c.from.deviceId === deviceId && c.from.port === port) &&
       !(c.to?.deviceId === deviceId && c.to?.port === port)
     ));
     setMovements(m => m + 1);
+    setDiagnosisActive(false);
   };
 
   const handleValidate = () => {
     if (!activeLevel) return;
     setDiagnosisActive(true);
 
-    const isHardwareCorrect = activeLevel.inventory.every((expected, idx) => {
-      const installed = installedDevices[idx];
-      return installed && installed.id === expected.id;
+    // 1. Hardware Scoring & Validation
+    let currentScore = 100;
+    let currentRecs: string[] = [];
+    
+    // Check if all required hardware is installed somewhere
+    const allHardwareInstalled = activeLevel.inventory.every(expected => 
+      Object.values(installedDevices).some(inst => inst.id === expected.id)
+    );
+
+    if (allHardwareInstalled) {
+      activeLevel.inventory.forEach((expected, idx) => {
+        const installedInThisSlot = installedDevices[idx];
+        if (!installedInThisSlot || installedInThisSlot.id !== expected.id) {
+          currentScore -= 8;
+          currentRecs.push(`Posicionamento: O ${expected.label} não está no slot ${activeLevel.inventory.length - idx}U planejado. Isso pode dificultar a identificação em racks densos.`);
+        }
+      });
+    }
+
+    // 2. Cabling Scoring & Validation
+    const cablingResults = activeLevel.connections_required.map(req => {
+      const conn = connections.find(c => {
+        const cFrom = `${c.from.deviceId}.${c.from.port}`;
+        const cTo = c.to ? `${c.to.deviceId}.${c.to.port}` : '';
+        return (req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom);
+      });
+
+      if (!conn) return { status: 'missing' };
+
+      if (conn.cableId !== req.cable) {
+        const reqCable = data.cables.find(cb => cb.id === req.cable);
+        const actualCable = data.cables.find(cb => cb.id === conn.cableId);
+        
+        // If they share the same physical type (e.g. ethernet), it's functional but suboptimal
+        if (reqCable?.type === actualCable?.type) {
+          currentScore -= 15;
+          currentRecs.push(`Performance: Usar ${actualCable?.id.toUpperCase()} em vez de ${reqCable?.id.toUpperCase()} para ${req.from} reduz a margem de segurança e largura de banda projetada.`);
+          return { status: 'suboptimal' };
+        }
+        return { status: 'wrong_type' };
+      }
+      return { status: 'correct' };
     });
 
-    const isCablingCorrect = activeLevel.connections_required.every(req => {
-      return connections.some(conn => {
-        const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
-        const cTo = `${conn.to?.deviceId}.${conn.to?.port}`;
-        return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId;
-      });
-    }) && connections.length === activeLevel.connections_required.length;
+    const isHardwarePresent = allHardwareInstalled;
+    const isCablingFunctional = cablingResults.every(r => r.status === 'correct' || r.status === 'suboptimal');
+    const hasWrongCableCategory = cablingResults.some(r => r.status === 'wrong_type' || r.status === 'missing');
 
-    if (isHardwareCorrect && isCablingCorrect) {
+    if (isHardwarePresent && isCablingFunctional && !hasWrongCableCategory) {
+      setFinalScore(Math.max(0, currentScore));
+      setRecommendations(currentRecs);
       setIsSyncing(true);
       playSound('complete');
       setShowSuccessTransition(true);
 
-      // Reset and Start Animation
+      // Animation & Transition
       successScale.setValue(0);
       successOpacity.setValue(1);
       
-      Animated.timing(successScale, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: true,
-      }).start();
+      Animated.timing(successScale, { toValue: 1, duration: 1500, useNativeDriver: true }).start();
 
       setTimeout(() => {
-        Animated.timing(successOpacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
+        Animated.timing(successOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
           setShowSuccessTransition(false);
           setFinished(true);
           setIsSyncing(false);
@@ -503,21 +363,26 @@ export function DataCenterBuilderScreen() {
           setElapsedTime(timeSecs);
           setCompletedLevels(new Set([...completedLevels, activeLevel.id]));
           if (user?.id) {
-             saveDataCenterResult(user.id, activeLevel.id, timeSecs, movements);
+             saveDataCenterResult(user.id, activeLevel.id, timeSecs, movements, Math.max(0, currentScore));
           }
         });
-      }, 3000);
+      }, 2000);
     } else {
       playSound('error');
-      // Diagnostic blink sequence
-      Animated.sequence([
-        Animated.timing(blinkAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
-        Animated.timing(blinkAnim, { toValue: 0.3, duration: 400, useNativeDriver: false }),
-        Animated.timing(blinkAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
-        Animated.timing(blinkAnim, { toValue: 0, duration: 400, useNativeDriver: false }),
-      ]).start();
-      
-      Alert.alert("Arquitetura Incompleta", "Verifique os LEDs diagnósticos que estão piscando em vermelho/laranja.");
+      setDiagnosisActive(true);
+      setValidationError({
+        title: "Arquitetura Incompleta",
+        message: "O projeto não atende aos requisitos técnicos. Verifique os LEDs diagnósticos que estão piscando em vermelho/laranja nos equipamentos e portas."
+      });
+
+      // Persistent loop for diagnostic blinking
+      blinkAnim.setValue(0);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkAnim, { toValue: 1, duration: 600, useNativeDriver: false }),
+          Animated.timing(blinkAnim, { toValue: 0.1, duration: 600, useNativeDriver: false }),
+        ])
+      ).start();
     }
   };
 
@@ -535,9 +400,15 @@ export function DataCenterBuilderScreen() {
       </View>
       
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }} contentContainerStyle={{ gap: 8 }}>
-        {['TODOS', 'EASY', 'MEDIUM', 'HARD'].map((filter) => {
+        {['TODOS', 'EASY', 'MEDIUM', 'HARD', 'EXPERT', 'EXTREME'].map((filter) => {
           const isActive = levelFilter === filter;
-          const filterColor = filter === 'EASY' ? '#22C55E' : filter === 'MEDIUM' ? '#F59E0B' : filter === 'HARD' ? '#EF4444' : '#3B82F6';
+          let filterColor = '#3B82F6';
+          if (filter === 'EASY') filterColor = '#22C55E';
+          if (filter === 'MEDIUM') filterColor = '#F59E0B';
+          if (filter === 'HARD') filterColor = '#EF4444';
+          if (filter === 'EXPERT') filterColor = '#8B5CF6'; // Purple
+          if (filter === 'EXTREME') filterColor = '#111111'; // Black/Carbon
+
           return (
             <TouchableOpacity 
               key={filter} 
@@ -566,15 +437,31 @@ export function DataCenterBuilderScreen() {
               style={[styles.levelCard, { backgroundColor: surfaceColor, borderColor: isDone ? '#10B98150' : '#2D3139' }]}
               onPress={() => handleLevelSelect(lvl)}
             >
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelNumber}>{lvl.id}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelNumber}>{lvl.id}</Text>
+                </View>
+                <View style={[styles.difficultyBadge, { 
+                  backgroundColor: lvl.difficulty === 'easy' ? '#22C55E20' : 
+                                   lvl.difficulty === 'medium' ? '#F59E0B20' : 
+                                   lvl.difficulty === 'hard' ? '#EF444420' :
+                                   lvl.difficulty === 'expert' ? '#8B5CF620' : '#111111'
+                }]}>
+                  <Text style={[styles.difficultyText, { 
+                    color: lvl.difficulty === 'extreme' ? '#FFFFFF' :
+                           lvl.difficulty === 'easy' ? '#22C55E' : 
+                           lvl.difficulty === 'medium' ? '#F59E0B' : 
+                           lvl.difficulty === 'hard' ? '#EF4444' : '#8B5CF6'
+                  }]}>
+                    {lvl.difficulty.toUpperCase()}
+                  </Text>
+                </View>
               </View>
+
+              {lvl.tier && <Text style={styles.levelTier}>{lvl.tier}</Text>}
               <Text style={[styles.levelName, { color: textPrimary }]} numberOfLines={2}>{lvl.name}</Text>
-              <View style={[styles.difficultyBadge, { backgroundColor: lvl.difficulty === 'easy' ? '#22C55E20' : (lvl.difficulty === 'medium' ? '#F59E0B20' : '#EF444420') }]}>
-                <Text style={[styles.difficultyText, { color: lvl.difficulty === 'easy' ? '#22C55E' : (lvl.difficulty === 'medium' ? '#F59E0B' : '#EF4444') }]}>
-                  {lvl.difficulty.toUpperCase()}
-                </Text>
-              </View>
+              {lvl.description && <Text style={styles.levelDescription} numberOfLines={2}>{lvl.description}</Text>}
+              
               {isDone && <MaterialIcons name="check-circle" size={24} color="#10B981" style={styles.doneIcon} />}
             </TouchableOpacity>
           );
@@ -582,58 +469,43 @@ export function DataCenterBuilderScreen() {
       </View>
     </ScrollView>
   );
-
   const renderWorkbench = () => {
     if (!activeLevel) return null;
 
-    // Standardized results handling
-    const renderHeader = () => (
-      <View style={[styles.workbenchHeader, { paddingTop: topPadding + 10, backgroundColor: surfaceColor, borderBottomWidth: 1, borderBottomColor: borderColor }]}>
-        <TouchableOpacity onPress={() => setActiveLevel(null)} style={styles.backButton}>
-          <MaterialIcons name="close" size={24} color={textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.workbenchTitle, { color: textPrimary }]}>RESULTADOS</Text>
-        <View style={{ width: 40 }} />
-      </View>
-    );
+    const MAX_RACK_W = 600;
+    const SLOT_H = 54;
+    const RACK_W = Math.min(windowWidth - 30, MAX_RACK_W);
+    const RAIL_W = 24;
+    const MAIN_W = RACK_W - (RAIL_W * 2);
+    const RACK_TOTAL_H = (activeLevel.inventory.length * SLOT_H) + 20;
 
     if (finished) {
       return (
         <View style={{ flex: 1, backgroundColor: bg }}>
-          {renderHeader()}
+           <View style={[styles.workbenchHeader, { paddingTop: topPadding + 10, backgroundColor: surfaceColor, borderBottomWidth: 1, borderBottomColor: borderColor }]}>
+            <TouchableOpacity onPress={() => setActiveLevel(null)} style={styles.backButton}>
+              <MaterialIcons name="close" size={24} color={textPrimary} />
+            </TouchableOpacity>
+            <Text style={[styles.workbenchTitle, { color: textPrimary }]}>RESULTADOS</Text>
+            <View style={{ width: 40 }} />
+          </View>
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}
           >
             <View style={{ alignItems: 'center', marginBottom: 32 }}>
-              <MaterialIcons name="emoji-events" size={80} color={QUIZ_COLORS.success} />
+              <MaterialCommunityIcons name="check-decagram" size={80} color="#22C55E" />
               <Text style={{ fontSize: 24, fontWeight: '800', color: textPrimary, marginTop: 16 }}>PROJETO VALIDADO!</Text>
               <Text style={{ color: textMuted, marginTop: 8, textAlign: 'center' }}>
                 O DataCenter está operando em conformidade técnica.
               </Text>
             </View>
-            
-            <View style={{ width: '100%', maxWidth: 300, gap: 12 }}>
-              <TouchableOpacity
-                onPress={() => setActiveLevel(null)}
-                style={{ 
-                  backgroundColor: QUIZ_COLORS.success, 
-                  padding: 16, borderRadius: 12, alignItems: 'center' 
-                }}
-              >
-                <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 16 }}>CONCLUIR PROJETO</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleLevelSelect(activeLevel)}
-                style={{ 
-                  backgroundColor: surfaceColor, 
-                  padding: 16, borderRadius: 12, alignItems: 'center',
-                  borderWidth: 1, borderColor: borderColor
-                }}
-              >
-                <Text style={{ color: textPrimary, fontWeight: '700' }}>REFAZER NÍVEL</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => setActiveLevel(null)}
+              style={{ backgroundColor: '#22C55E', padding: 16, borderRadius: 12, width: '100%', alignItems: 'center' }}
+            >
+              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 16 }}>CONCLUIR PROJETO</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       );
@@ -658,209 +530,313 @@ export function DataCenterBuilderScreen() {
           )}
         </View>
 
-        <ScrollView style={{ flex: 1, paddingTop: 10 }} contentContainerStyle={{ padding: 15, paddingBottom: bottomPadding + 100 }}>
-          <View style={styles.rackContainer} ref={rackRef}>
-            <View style={styles.rackRailLeft}>
-               {[1,2,3,4,5,6,7,8].map(i => <View key={i} style={styles.railHole} />)}
-            </View>
-            <View style={styles.rackMain}>
-              {activeLevel.inventory.map((expectedDevice, index) => {
-                const installed = installedDevices[index];
-                const isBlinkingS = blinkSlot?.index === index;
-                const slotColor = blinkAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['transparent', blinkSlot?.type === 'success' ? '#22C55E88' : '#EF444488']
-                });
-                const uNum = activeLevel.inventory.length - index;
+        <ScrollView 
+          style={{ flex: 1 }} 
+          contentContainerStyle={{ padding: 15, paddingBottom: bottomPadding + 100, alignItems: 'center' }}
+        >
+          <View style={{ width: RACK_W, height: RACK_TOTAL_H }}>
+            <Svg width={RACK_W} height={RACK_TOTAL_H} viewBox={`0 0 ${RACK_W} ${RACK_TOTAL_H}`}>
+            {/* Main Rack Chassis */}
+            <Rect x="0" y="0" width={RACK_W} height={RACK_TOTAL_H} fill="#0A0A0A" rx={8} stroke="#1A1A1A" strokeWidth="2" />
+            
+            {/* Rails */}
+            <G>
+              <Rect x="0" y="0" width={RAIL_W} height={RACK_TOTAL_H} fill="#151515" />
+              <Rect x={RACK_W - RAIL_W} y="0" width={RAIL_W} height={RACK_TOTAL_H} fill="#151515" />
+              <Line x1={RAIL_W} y1="0" x2={RAIL_W} y2={RACK_TOTAL_H} stroke="#222" strokeWidth="1" />
+              <Line x1={RACK_W - RAIL_W} y1="0" x2={RACK_W - RAIL_W} y2={RACK_TOTAL_H} stroke="#222" strokeWidth="1" />
+              
+              {/* Rail Holes */}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <React.Fragment key={i}>
+                  <Circle cx={RAIL_W/2} cy={24 + (i * SLOT_H)} r="4" fill="#000" stroke="#222" strokeWidth="1" />
+                  <Circle cx={RACK_W - (RAIL_W/2)} cy={24 + (i * SLOT_H)} r="4" fill="#000" stroke="#222" strokeWidth="1" />
+                </React.Fragment>
+              ))}
+            </G>
 
-                return (
-                  <View 
-                    key={index} 
-                    style={{ flexDirection: 'row', alignItems: 'center' }}
-                    onLayout={(e) => {
-                      const { y } = e.nativeEvent.layout;
-                      setRowPositions(prev => ({ ...prev, [index]: y }));
-                    }}
-                  >
-                    <Text style={styles.uLabel}>{uNum}U</Text>
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        if (installed) {
-                          setInventory(prev => [...prev, installed]);
-                          const newInstalled = { ...installedDevices };
-                          delete newInstalled[index];
-                          setInstalledDevices(newInstalled);
-                          setMovements(m => m + 1);
-                          setDiagnosisActive(false);
-                        } else {
-                          setSelectedSlotForInstall(index);
-                        }
-                      }}
-                      style={[styles.rackSlot, !installed && styles.emptySlot, { flex: 1 }]}
-                    >
-                      {isBlinkingS && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: slotColor, borderRadius: 4, zIndex: 1 }]} />}
-                      {installed ? (
-                        <DeviceRow 
-                          device={installed} 
-                          connections={connections} 
-                          selectedPort={sourceNode} 
-                          onPortPress={handlePortPress} 
-                          cables={data.cables} 
-                          blinkingPorts={blinkingPorts} 
-                          blinkAnim={blinkAnim}
-                          isPoweredOn={finished}
-                          diagnosisActive={diagnosisActive}
-                          requiredConnections={activeLevel.connections_required}
-                          expectedDeviceId={expectedDevice.id}
-                          onPortLayout={(fullPortKey, relX, relY) => {
-                             const rY = rowPositions[index] || 0;
-                             setPortPositions(prev => ({
-                               ...prev,
-                               [fullPortKey]: { x: relX + 28 + 14 + 14, y: relY + rY + 42 }
-                             }));
-                          }}
+            {/* Slots and Hardware */}
+            {activeLevel.inventory.map((expectedDevice, index) => {
+              const installed = installedDevices[index];
+              const y = 10 + (index * SLOT_H);
+              const uNum = activeLevel.inventory.length - index;
+              const isBlinkingS = blinkSlot?.index === index;
+              
+              return (
+                <G key={index}>
+                  {!installed ? (
+                    <G>
+                      {/* Visuals Base */}
+                      <Rect x={RAIL_W + 4} y={y + 2} width={MAIN_W - 8} height={SLOT_H - 4} fill="#080808" rx={2} stroke="#111" strokeWidth="1" />
+                      <SvgText x={RACK_W/2} y={y + 32} fill="#222" fontSize="11" fontWeight="900" textAnchor="middle" fontFamily="Arial">
+                        ADICIONAR {uNum}U
+                      </SvgText>
+                      {isBlinkingS && (
+                        <Rect x={RAIL_W + 4} y={y + 2} width={MAIN_W - 8} height={SLOT_H - 4} fill={blinkSlot?.type === 'success' ? '#22C55E44' : '#EF444444'} rx={2} />
+                      )}
+                      <SvgText x={4} y={y + 30} fill="#444" fontSize="9" fontWeight="900" fontFamily="Arial">{uNum}U</SvgText>
+                    </G>
+                  ) : (
+                    <G>
+                      {/* Hardware Visuals */}
+                      <Rect x={RAIL_W} y={y} width={MAIN_W} height={SLOT_H} fill="#18181B" rx={1} stroke="#27272A" strokeWidth="1" />
+                      <Rect x={RAIL_W + 4} y={y + 2} width={MAIN_W - 8} height={SLOT_H - 4} fill="#1A1A1E" rx={1} />
+                      <SvgText x={4} y={y + 30} fill="#444" fontSize="9" fontWeight="900" fontFamily="Arial">{uNum}U</SvgText>
+                      <SvgText x={RAIL_W + 12} y={y + 18} fill="#ECEDEE" fontSize="10" fontWeight="900" fontFamily="Arial">
+                        {installed.label || installed.id.toUpperCase()}
+                      </SvgText>
+                      <SvgText x={RAIL_W + 12} y={y + 28} fill="#71717A" fontSize="7" fontWeight="bold" fontFamily="Arial">
+                        {installed.type.toUpperCase()}
+                      </SvgText>
+                      
+                      {/* Diagnostic LEDs */}
+                      {diagnosisActive && activeLevel.inventory[index].id !== installed.id ? (
+                        <AnimatedCircle 
+                          cx={RACK_W - RAIL_W - 35} 
+                          cy={y + 18} 
+                          r="3" 
+                          fill="#EF4444" 
+                          opacity={blinkAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.3, 1]
+                          })}
                         />
                       ) : (
-                        <View style={styles.slotEmptyContent}>
-                          <MaterialIcons name="add-box" size={20} color="#222" />
-                          <Text style={styles.slotEmptyText}>{uNum} U</Text>
-                        </View>
+                        <Circle cx={RACK_W - RAIL_W - 35} cy={y + 18} r="2.5" fill={diagnosisActive ? '#22C55E' : '#27272A'} />
                       )}
-                    </TouchableOpacity>
+                      <Circle cx={RACK_W - RAIL_W - 25} cy={y + 18} r="2.5" fill={finished ? '#3B82F6' : '#27272A'} />
+
+                      {/* Ports */}
+                      {installed.ports.map((portId, pIdx) => {
+                        const isSelected = sourceNode?.deviceId === installed.id && sourceNode?.port === portId;
+                        const isConnected = connections.find(c => (c.from.deviceId === installed.id && c.from.port === portId) || (c.to?.deviceId === installed.id && c.to?.port === portId));
+                        const portX = RAIL_W + 12 + (pIdx * 28);
+                        const portY = y + 32;
+                        
+                        // Check if this connection is WRONG during diagnosis
+                        let isPortError = false;
+                        if (diagnosisActive && isConnected) {
+                          const isCorrect = activeLevel.connections_required.some(req => {
+                            const cFrom = `${isConnected.from.deviceId}.${isConnected.from.port}`;
+                            const cTo = isConnected.to ? `${isConnected.to.deviceId}.${isConnected.to.port}` : '';
+                            return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === isConnected.cableId;
+                          });
+                          isPortError = !isCorrect;
+                        }
+
+                        return (
+                          <G key={portId}>
+                            <Rect x={portX} y={portY} width={22} height={18} rx={2} fill="#0A0A0A" stroke={isSelected ? '#3B82F6' : (isConnected ? (isPortError ? '#EF4444' : getPortColor(portId, installed.id)) : '#333')} strokeWidth={isSelected || isPortError ? 2 : 1} />
+                            {isPortError ? (
+                              <AnimatedRect 
+                                x={portX + 6} y={portY + 4} width={10} height={10} 
+                                fill="#EF4444" 
+                                rx={1.5} 
+                                opacity={blinkAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0.3, 1]
+                                })}
+                              />
+                            ) : (
+                              <Rect x={portX + 6} y={portY + 4} width={10} height={10} fill={isConnected ? getPortColor(portId, installed.id) : "#222"} rx={1.5} />
+                            )}
+                            <SvgText x={portX + 2} y={portY + 16} fontSize="5" fill="#555" fontWeight="900">{portId.slice(-4)}</SvgText>
+                          </G>
+                        );
+                      })}
+                    </G>
+                  )}
+                </G>
+              );
+            })}
+
+            {/* Cable Layer (Dynamic bezier paths) */}
+            {connections.map(conn => {
+              const fromSlotIdx = Object.keys(installedDevices).find(k => installedDevices[parseInt(k)].id === conn.from.deviceId);
+              const toSlotIdx = Object.keys(installedDevices).find(k => installedDevices[parseInt(k)].id === conn.to?.deviceId);
+              
+              if (fromSlotIdx === undefined || toSlotIdx === undefined) return null;
+              
+              const fsIdx = parseInt(fromSlotIdx);
+              const tsIdx = parseInt(toSlotIdx);
+              const p1Idx = installedDevices[fsIdx].ports.indexOf(conn.from.port);
+              const p2Idx = installedDevices[tsIdx].ports.indexOf(conn.to!.port);
+
+              const p1x = RAIL_W + 12 + (p1Idx * 28) + 11;
+              const p1y = 10 + (fsIdx * SLOT_H) + 32 + 9;
+              const p2x = RAIL_W + 12 + (p2Idx * 28) + 11;
+              const p2y = 10 + (tsIdx * SLOT_H) + 32 + 9;
+
+              const cable = data.cables.find(c => c.id === conn.cableId);
+              const color = cable?.type === 'fiber' ? '#F43F5E' : (cable?.type === 'ethernet' ? '#3B82F6' : '#F59E0B');
+              const curveX = Math.max(p1x, p2x) + 40;
+
+              const isCableCorrect = activeLevel.connections_required.some(req => {
+                const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
+                const cTo = conn.to ? `${conn.to.deviceId}.${conn.to.port}` : '';
+                return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId;
+              });
+
+              const isError = diagnosisActive && !isCableCorrect;
+
+              return (
+                <G key={conn.id}>
+                  <AnimatedPath 
+                    d={`M ${p1x} ${p1y} C ${curveX} ${p1y} ${curveX} ${p2y} ${p2x} ${p2y}`} 
+                    stroke={isError ? '#EF4444' : color} 
+                    strokeWidth={isError ? 5 : 3} 
+                    fill="none" 
+                    strokeLinecap="round" 
+                    opacity={isError ? blinkAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.3, 1]
+                    }) : 0.8}
+                  />
+                  <Rect x={p1x - 4} y={p1y - 4} width={8} height={8} fill={isError ? '#EF4444' : color} rx={1} />
+                  <Rect x={p2x - 4} y={p2y - 4} width={8} height={8} fill={isError ? '#EF4444' : color} rx={1} />
+                </G>
+              );
+            })}
+          </Svg>
+
+            {/* 2. Interaction Layer (Native Pressable Overlay) */}
+            <View style={{ ...StyleSheet.absoluteFillObject }} pointerEvents="box-none">
+              {activeLevel.inventory.map((_, index) => {
+                const installed = installedDevices[index];
+                const y = 10 + (index * SLOT_H);
+                return (
+                  <View key={index} style={{ position: 'absolute', top: y, left: 0, width: RACK_W, height: SLOT_H }} pointerEvents="box-none">
+                    {/* General Hitbox (Install/Uninstall) */}
+                    <Pressable 
+                       style={{ ...StyleSheet.absoluteFillObject }}
+                       onPress={() => installed ? handleUninstall(index) : setSelectedSlotForInstall(index)}
+                    />
+                    
+                    {/* Port Specific Hitboxes (Higher Priority) */}
+                    {installed && (
+                      <View style={{ position: 'absolute', top: 30, left: RAIL_W + 10, flexDirection: 'row', gap: 6 }} pointerEvents="box-none">
+                        {installed.ports.map((portId, pIdx) => (
+                          <Pressable 
+                            key={portId}
+                            style={{ width: 24, height: 22 }}
+                            onPress={() => handlePortPress(installed.id, portId)}
+                          />
+                        ))}
+                      </View>
+                    )}
                   </View>
                 );
               })}
             </View>
-            <View style={styles.rackRailRight}>
-               {[1,2,3,4,5,6,7,8].map(i => <View key={i} style={styles.railHole} />)}
-            </View>
-
-             {/* Cable Rendering Layer */}
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
-              <Svg width="100%" height="100%">
-                {connections.map(conn => {
-                  const p1 = portPositions[`${conn.from.deviceId}.${conn.from.port}`];
-                  const p2 = portPositions[`${conn.to?.deviceId}.${conn.to?.port}`];
-                  
-                  if (!p1 || !p2) return null;
-
-                  const cable = data.cables.find(c => c.id === conn.cableId);
-                  const color = cable?.type === 'fiber' ? '#F43F5E' : (cable?.type === 'ethernet' ? '#3B82F6' : '#F59E0B');
-
-                  // Check if this specific connection is correct
-                  const isCorrect = activeLevel.connections_required.some(req => {
-                    const cFrom = `${conn.from.deviceId}.${conn.from.port}`;
-                    const cTo = `${conn.to?.deviceId}.${conn.to?.port}`;
-                    return ((req.from === cFrom && req.to === cTo) || (req.from === cTo && req.to === cFrom)) && req.cable === conn.cableId;
-                  });
-
-                  const cableOpacity = diagnosisActive && !isCorrect 
-                    ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 0.1] }) 
-                    : 0.7;
-
-                  // Bezier curve points
-                  const curveOffset = 60; // How much it bulges to the right
-                  const midY = (p1.y + p2.y) / 2;
-
-                  return (
-                    <React.Fragment key={conn.id}>
-                      {/* Cable Path with rightward curve */}
-                      <AnimatedPath
-                        d={`M ${p1.x} ${p1.y} C ${p1.x + curveOffset} ${p1.y} ${p2.x + curveOffset} ${p2.y} ${p2.x} ${p2.y}`}
-                        stroke={color}
-                        strokeWidth="3.5"
-                        fill="none"
-                        strokeLinecap="round"
-                        opacity={cableOpacity}
-                      />
-                      {/* Start Connector - Higher contrast */}
-                      <AnimatedPath
-                        d={`M ${p1.x - 5} ${p1.y - 4} h 10 v 8 h -10 z`}
-                        fill={color}
-                        opacity={diagnosisActive && !isCorrect ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1}
-                        stroke="rgba(0,0,0,0.3)"
-                        strokeWidth="1"
-                      />
-                      {/* End Connector - Higher contrast */}
-                      <AnimatedPath
-                        d={`M ${p2.x - 5} ${p2.y - 4} h 10 v 8 h -10 z`}
-                        fill={color}
-                        opacity={diagnosisActive && !isCorrect ? blinkAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) : 1}
-                        stroke="rgba(0,0,0,0.3)"
-                        strokeWidth="1"
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </Svg>
-            </View>
           </View>
 
+          {/* Guidelines area */}
           <View style={styles.rulesContainer}>
-            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}><MaterialIcons name="info-outline" size={16} color="#9BA1A6" /><Text style={styles.rulesTitle}>DIRETRIZES TÉCNICAS</Text></View>
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+              <MaterialIcons name="info-outline" size={16} color="#9BA1A6" />
+              <Text style={styles.rulesTitle}>DIRETRIZES DO PROJETO</Text>
+            </View>
             {activeLevel.rules ? activeLevel.rules.map((rule, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 4 }}>
                 <Text style={styles.ruleItem}>• </Text>
-                <GlossaryText 
-                  text={rule} 
-                  track="DataCenter"
-                  style={styles.ruleItem} 
-                />
+                <GlossaryText text={rule} track="DataCenter" style={styles.ruleItem} />
               </View>
-            )) : (
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                <Text style={styles.ruleItem}>• </Text>
-                <GlossaryText 
-                  text="Realize o cabeamento conforme o diagrama lógico do projeto." 
-                  track="DataCenter"
-                  style={styles.ruleItem} 
-                />
-              </View>
-            )}
+            )) : <Text style={styles.ruleItem}>• Siga o diagrama lógico do exercício.</Text>}
           </View>
         </ScrollView>
 
         <Modal visible={selectedSlotForInstall !== null} transparent animationType="slide">
           <Pressable style={styles.modalOverlay} onPress={() => setSelectedSlotForInstall(null)}>
-            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-              <View style={styles.modalHeader}><Text style={styles.modalTitle}>Escolha o Hardware</Text><Text style={styles.modalSubtitle}>{activeLevel.inventory.length - (selectedSlotForInstall || 0)} U</Text></View>
-              <ScrollView style={styles.modalScroll}><View style={styles.inventoryGrid}>
-                {inventory.map((device) => {
-                  const isBlinkingItem = blinkingInventoryItem === device.id;
-                  const itemBlinkColor = blinkAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['transparent', '#EF444488']
-                  });
+            <View style={[styles.modalContent, { minHeight: 450 }]} onStartShouldSetResponder={() => true}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Escolha o Hardware</Text>
+                <Text style={styles.modalSubtitle}>Disponível para {selectedSlotForInstall !== null ? activeLevel.inventory.length - selectedSlotForInstall : 0} U</Text>
+              </View>
 
+              <ScrollView 
+                style={styles.modalScroll} 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.inventoryGrid}
+              >
+                {activeLevel.inventory.filter(device => !Object.values(installedDevices).some(id => id.id === device.id)).map((device) => {
+                  const isBlinkingItem = blinkingInventoryItem === device.id;
+                  const getIcon = (type: string) => {
+                    switch(type) {
+                      case 'server': return 'server';
+                      case 'storage': return 'database';
+                      case 'network': return 'router-network';
+                      case 'telecom': return 'transmission-tower';
+                      case 'wireless': return 'wifi';
+                      case 'security': return 'shield-check';
+                      default: return 'chip';
+                    }
+                  };
                   return (
-                    <TouchableOpacity key={device.id} onPress={() => handleInstallItem(device)} style={styles.inventoryItem}>
-                      {isBlinkingItem && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: itemBlinkColor, borderRadius: 16, zIndex: 10 }]} />}
-                      <MaterialCommunityIcons name={getDeviceIcon(device.id, device.type) as any} size={28} color="#3B82F6" />
-                      <Text style={styles.inventoryItemName}>{device.id.toUpperCase()}</Text>
-                      <Text style={styles.inventoryItemType}>{device.type}</Text>
+                    <TouchableOpacity 
+                      key={device.id} 
+                      onPress={() => handleInstallItem(device)} 
+                      style={[
+                        styles.inventoryItem, 
+                        { margin: 8 }, 
+                        isBlinkingItem && { borderColor: '#22C55E', borderWidth: 2, backgroundColor: '#22C55E10' }
+                      ]}
+                    >
+                      <MaterialCommunityIcons 
+                        name={getIcon(device.type) as any} 
+                        size={32} 
+                        color={isBlinkingItem ? '#22C55E' : '#3B82F6'} 
+                      />
+                      <Text style={styles.inventoryItemName} numberOfLines={2}>{device.label}</Text>
+                      <Text style={styles.inventoryItemType}>{device.type.toUpperCase()}</Text>
                     </TouchableOpacity>
                   );
                 })}
-              </View></ScrollView>
-              <TouchableOpacity onPress={() => setSelectedSlotForInstall(null)} style={styles.modalCloseButton}><Text style={styles.modalCloseText}>CANCELAR</Text></TouchableOpacity>
+              </ScrollView>
+
+              <TouchableOpacity onPress={() => setSelectedSlotForInstall(null)} style={styles.modalCloseButton}>
+                <Text style={styles.modalCloseText}>CANCELAR</Text>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Modal>
 
         <Modal visible={showCableMenu} transparent animationType="slide">
           <Pressable style={styles.modalOverlay} onPress={() => { setShowCableMenu(false); setSourceNode(null); }}>
-            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
-              <View style={styles.modalHeader}><Text style={styles.modalTitle}>Selecione o Cabo</Text><Text style={styles.modalSubtitle}>Para conectar {sourceNode?.deviceId}.{sourceNode?.port}</Text></View>
-              <ScrollView style={styles.modalScroll}><View style={styles.cableGrid}>
+            <View style={[styles.modalContent, { minHeight: 400 }]} onStartShouldSetResponder={() => true}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Selecione o Cabo</Text>
+                <Text style={styles.modalSubtitle}>Para conectar {sourceNode?.deviceId}.{sourceNode?.port}</Text>
+              </View>
+
+              <ScrollView 
+                style={styles.modalScroll} 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.cableGrid}
+              >
                 {data.cables.map((cable) => (
-                  <TouchableOpacity key={cable.id} onPress={() => { setSelectedCable(cable); setShowCableMenu(false); }} style={styles.cableMenuItem}>
-                    <View style={[styles.cableIconCircle, { backgroundColor: cable.type === 'fiber' ? '#F43F5E20' : (cable.type === 'ethernet' ? '#3B82F620' : '#F59E0B20') }]}><MaterialCommunityIcons name="lan" size={24} color={cable.type === 'fiber' ? '#F43F5E' : (cable.type === 'ethernet' ? '#3B82F6' : '#F59E0B')} /></View>
-                    <View style={{ flex: 1 }}><Text style={styles.cableMenuName}>{cable.id.toUpperCase()}</Text><Text style={styles.cableMenuDesc}>{cable.speed} • {cable.type}</Text></View>
+                  <TouchableOpacity 
+                    key={cable.id} 
+                    onPress={() => { setSelectedCable(cable); setShowCableMenu(false); }} 
+                    style={styles.cableMenuItem}
+                  >
+                    <View style={[styles.cableIconCircle, { backgroundColor: cable.type === 'fiber' ? '#F43F5E20' : (cable.type === 'ethernet' ? '#3B82F620' : '#F59E0B20') }]}>
+                      <MaterialCommunityIcons 
+                        name="lan" 
+                        size={24} 
+                        color={cable.type === 'fiber' ? '#F43F5E' : (cable.type === 'ethernet' ? '#3B82F6' : '#F59E0B')} 
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cableMenuName}>{cable.id.toUpperCase()}</Text>
+                      <Text style={styles.cableMenuDesc} numberOfLines={2}>{cable.speed} • {cable.type.toUpperCase()}</Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
-              </View></ScrollView>
-              <TouchableOpacity onPress={() => { setShowCableMenu(false); setSourceNode(null); }} style={styles.modalCloseButton}><Text style={styles.modalCloseText}>CANCELAR</Text></TouchableOpacity>
+              </ScrollView>
+
+              <TouchableOpacity onPress={() => { setShowCableMenu(false); setSourceNode(null); }} style={styles.modalCloseButton}>
+                <Text style={styles.modalCloseText}>CANCELAR</Text>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Modal>
@@ -933,9 +909,93 @@ export function DataCenterBuilderScreen() {
           </Animated.View>
         </Animated.View>
       )}
-    </View>
-  );
-}
+        <Modal visible={showPhaseAlert} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxWidth: 340, alignItems: 'center' }]}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#F59E0B20', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <MaterialIcons name="warning-amber" size={32} color="#F59E0B" />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Fase 1 Pendente</Text>
+              <Text style={{ color: '#A1A1AA', textAlign: 'center', marginTop: 12, lineHeight: 20, fontSize: 14 }}>
+                Você ainda possui equipamentos no inventário. Finalize a instalação de todo o hardware no rack antes de iniciar o cabeamento.
+              </Text>
+              <TouchableOpacity 
+                onPress={() => setShowPhaseAlert(false)} 
+                style={[styles.modalCloseButton, { width: '100%', backgroundColor: '#F59E0B', borderColor: '#F59E0B', marginTop: 32 }]}
+              >
+                <Text style={[styles.modalCloseText, { color: '#000' }]}>ENTENDI</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        {/* Modal de Erro de Validação/Arquitetura */}
+        <Modal visible={validationError !== null} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxWidth: 340, alignItems: 'center', borderColor: '#EF444430' }]}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#EF444420', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <MaterialIcons name="error-outline" size={32} color="#EF4444" />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center', color: '#EF4444' }]}>{validationError?.title}</Text>
+              <Text style={{ color: '#A1A1AA', textAlign: 'center', marginTop: 12, lineHeight: 20, fontSize: 13 }}>
+                {validationError?.message}
+              </Text>
+              <TouchableOpacity 
+                onPress={() => setValidationError(null)} 
+                style={[styles.modalCloseButton, { width: '100%', backgroundColor: '#EF4444', borderColor: '#EF4444', marginTop: 32 }]}
+              >
+                <Text style={[styles.modalCloseText, { color: '#FFF' }]}>REVISAR PROJETO</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        {/* Dashboard de Resultados Final */}
+        <Modal visible={finished} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '90%', padding: 20 }]}>
+              <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: finalScore >= 90 ? '#22C55E20' : '#F59E0B20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                  <MaterialIcons name={finalScore >= 90 ? "verified" : "assignment-turned-in"} size={48} color={finalScore >= 90 ? "#22C55E" : "#F59E0B"} />
+                </View>
+                <Text style={[styles.modalTitle, { fontSize: 24 }]}>PROJETO HOMOLOGADO</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
+                  <Text style={{ fontSize: 48, fontWeight: '900', color: finalScore >= 90 ? '#22C55E' : '#F59E0B' }}>{finalScore}</Text>
+                  <Text style={{ fontSize: 18, color: '#71717A', fontWeight: '700', marginLeft: 4 }}>% EFICIÊNCIA</Text>
+                </View>
+              </View>
+
+              {recommendations.length > 0 && (
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#ECEDEE', fontSize: 14, fontWeight: '900', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Recomendações Técnicas:</Text>
+                  <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                    {recommendations.map((rec, i) => (
+                      <View key={i} style={{ backgroundColor: '#1A1A1E', padding: 12, borderRadius: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: '#F59E0B' }}>
+                        <Text style={{ color: '#A1A1AA', fontSize: 12, lineHeight: 18 }}>{rec}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+                <TouchableOpacity 
+                  onPress={() => setFinished(false)} 
+                  style={[styles.modalCloseButton, { flex: 1, backgroundColor: 'transparent', borderColor: '#27272A', marginTop: 0 }]}
+                >
+                  <Text style={styles.modalCloseText}>REVISAR</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => goToNextLevel()} 
+                  style={[styles.modalCloseButton, { flex: 2, backgroundColor: '#3B82F6', borderColor: '#3B82F6', marginTop: 0 }]}
+                >
+                  <Text style={[styles.modalCloseText, { color: '#FFF' }]}>PRÓXIMO NÍVEL</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
 
 const styles = StyleSheet.create({
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
@@ -943,19 +1003,30 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, marginTop: 4, lineHeight: 20 },
   levelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 24 },
   levelCard: { flexBasis: '48%', flexGrow: 1, padding: 16, borderRadius: 20, borderWidth: 1, position: 'relative' },
-  levelBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#3B82F620', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  levelBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#3B82F620', alignItems: 'center', justifyContent: 'center' },
   levelNumber: { color: '#3B82F6', fontWeight: '800' },
-  levelName: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  levelTier: { color: '#3B82F6', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', marginBottom: 4 },
+  levelName: { fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  levelDescription: { color: '#9BA1A6', fontSize: 11, lineHeight: 16, marginTop: 4 },
   difficultyBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   difficultyText: { fontSize: 9, fontWeight: '800' },
-  doneIcon: { position: 'absolute', top: 12, right: 12 },
+  doneIcon: { position: 'absolute', top: 58, right: 12 },
   
-  workbenchHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#1A1D21' },
-  closeButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  workbenchLevelName: { color: '#ECEDEE', fontSize: 15, fontWeight: '800' },
-  workbenchStatus: { color: '#9BA1A6', fontSize: 11, fontWeight: '600' },
-  validateButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  validateButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
+  workbenchHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingBottom: 15,
+    backgroundColor: '#0A0A0A',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A1E'
+  },
+  closeButton: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#1A1A1E', alignItems: 'center', justifyContent: 'center' },
+  workbenchTitle: { fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  workbenchLevelName: { color: '#ECEDEE', fontSize: 16, fontWeight: '900' },
+  workbenchStatus: { color: '#71717A', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
+  validateButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  validateButtonText: { color: '#FFF', fontWeight: '900', fontSize: 12 },
 
   rackContainer: { 
     flexDirection: 'row', 
@@ -1010,55 +1081,55 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 4,
   },
-  rackMain: { flex: 1, gap: 4, paddingHorizontal: 2 },
-  rackSlot: { minHeight: 85, borderRadius: 2, position: 'relative', overflow: 'hidden' },
+  rackMain: { flex: 1, gap: 2, paddingHorizontal: 2 },
+  rackSlot: { height: 54, borderRadius: 2, position: 'relative', marginVertical: 1, overflow: 'hidden' },
   emptySlot: { 
+    height: 54,
     backgroundColor: '#080808', 
     borderWidth: 1, 
     borderColor: '#111', 
     alignItems: 'center', 
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 2,
-    elevation: 5
+    borderRadius: 2
   },
-  slotEmptyContent: { alignItems: 'center', opacity: 0.3 },
+  slotEmptyContent: { flexDirection: 'row', alignItems: 'center', opacity: 0.3, gap: 8 },
   slotEmptyText: { color: '#333', fontSize: 11, fontWeight: '900' },
 
   deviceRow: { 
-    flex: 1,
+    width: '100%',
+    height: 54,
+    maxHeight: 54,
     backgroundColor: '#18181B', 
-    borderRadius: 3, 
+    borderRadius: 2, 
     borderWidth: 1, 
     borderColor: '#27272A',
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5
+    overflow: 'hidden'
   },
   devicePanel: {
     flex: 1,
-    backgroundColor: '#1F1F23',
-    padding: 8,
+    height: 52,
+    backgroundColor: '#1A1A1E',
+    paddingVertical: 0,
+    paddingHorizontal: 6,
     borderLeftWidth: 2,
     borderRightWidth: 2,
     borderColor: '#2D2D33',
-    position: 'relative'
+    position: 'relative',
+    justifyContent: 'center',
+    overflow: 'hidden'
   },
   deviceBrushedEffect: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    opacity: 0.5
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    zIndex: 0
   },
   deviceHandle: {
     width: 14,
-    backgroundColor: '#111',
+    backgroundColor: '#0D0D0F',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: '#1A1A1E',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -1072,76 +1143,55 @@ const styles = StyleSheet.create({
   },
   deviceHeader: { 
     paddingHorizontal: 4, 
-    marginBottom: 10, 
     flexDirection: 'row', 
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  deviceName: { color: '#A1A1AA', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
-  deviceType: { color: '#71717A', fontSize: 8, textTransform: 'uppercase', fontWeight: '800' },
-  ledsContainer: { flexDirection: 'row', gap: 4, marginBottom: 8, paddingHorizontal: 4 },
-  led: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#111' },
+  deviceName: { color: '#ECEDEE', fontSize: 10, fontWeight: '900', letterSpacing: 0.2 },
+  deviceType: { color: '#71717A', fontSize: 7, textTransform: 'uppercase', fontWeight: '800' },
+  ledsContainer: { flexDirection: 'row', gap: 2, paddingHorizontal: 2 },
+  led: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#111' },
   ledActiveGreen: { 
     backgroundColor: '#22C55E', 
-    shadowColor: '#22C55E', 
-    shadowOffset: { width: 0, height: 0 }, 
-    shadowOpacity: 1, 
-    shadowRadius: 4,
-    elevation: 5
+    shadowColor: '#22C55E', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 4,
+    elevation: 3
   },
   ledActiveOrange: { 
     backgroundColor: '#F59E0B', 
-    shadowColor: '#F59E0B', 
-    shadowOffset: { width: 0, height: 0 }, 
-    shadowOpacity: 1, 
-    shadowRadius: 4,
-    elevation: 5
+    shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 4,
+    elevation: 3
   },
   ledActiveRed: { 
     backgroundColor: '#EF4444', 
-    shadowColor: '#EF4444', 
-    shadowOffset: { width: 0, height: 0 }, 
-    shadowOpacity: 1, 
-    shadowRadius: 4,
-    elevation: 5
+    shadowColor: '#EF4444', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 4,
+    elevation: 3
   },
-  portsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 4 },
-  port: { 
-    width: 48, 
-    height: 34, 
-    borderRadius: 2, 
-    borderWidth: 1, 
-    borderColor: '#2D2D33',
-    backgroundColor: '#0F0F12',
+  ledPowerOn: { 
+    backgroundColor: '#3B82F6', 
+    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 4,
+    elevation: 3
+  },
+  portsContainer: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4
+  },
+  port: {
+    width: 20,
+    height: 20,
+    borderRadius: 3,
+    borderWidth: 1.5,
     alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 1,
-    position: 'relative', 
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.5,
-    shadowRadius: 1
+    justifyContent: 'center',
+    backgroundColor: '#111', 
+    borderColor: 'rgba(255,255,255,0.1)'
   },
-  portInner: {
-    width: 6,
-    height: 4,
-    borderRadius: 1,
-    position: 'absolute',
-    top: 4,
-  },
-  portHole: { 
-    width: 14, 
-    height: 10, 
-    borderRadius: 1,
-    borderWidth: 1,
-    borderColor: '#222',
-    backgroundColor: '#000'
-  },
-  portLabel: { color: '#4B5563', fontSize: 7, fontWeight: '900', marginTop: 2 },
+  portHole: { width: 10, height: 10, borderRadius: 1.5, backgroundColor: '#222' },
+  portLabel: { color: '#666', fontSize: 5, fontWeight: '800', position: 'absolute', bottom: -1, right: 1 },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#0D0F10', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, minHeight: '60%', borderTopWidth: 1, borderTopColor: '#1F1F23' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#0D0F10', borderRadius: 24, padding: 24, width: '100%', maxWidth: 500, maxHeight: '80%', borderWidth: 1, borderColor: '#1F1F23' },
   modalHeader: { marginBottom: 32, alignItems: 'center' },
   modalTitle: { color: '#F4F4F5', fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
   modalSubtitle: { color: '#3B82F6', fontSize: 13, fontWeight: '800', marginTop: 6, textTransform: 'uppercase' },
@@ -1149,7 +1199,7 @@ const styles = StyleSheet.create({
   modalCloseButton: { marginTop: 24, paddingVertical: 16, backgroundColor: '#18181B', borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#27272A' },
   modalCloseText: { color: '#A1A1AA', fontWeight: '900', fontSize: 14 },
 
-  inventoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
+  inventoryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   inventoryItem: { 
     width: 100, 
     height: 120, 

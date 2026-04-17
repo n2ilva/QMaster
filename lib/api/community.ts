@@ -24,6 +24,8 @@ import {
   calculateCodingExerciseScore
 } from "./progress";
 import { fetchCodingPracticeProgress, fetchCodingExercises } from "./coding-practice";
+import { fetchQuickResponseProgress } from "./quick-response";
+import { fetchDataCenterProgress } from "./datacenter";
 import type {
   LessonRecord,
   ScoreLevel,
@@ -46,9 +48,11 @@ export async function updateUserProfile(
   const lessonsRef = collection(db, "users", uid, "lessons");
   
   // Fetch everything in parallel for the hybrid score
-  const [lessonsSnapshot, codingResults] = await Promise.all([
+  const [lessonsSnapshot, codingResults, quickProgress, dcProgress] = await Promise.all([
     getDocs(lessonsRef),
-    fetchCodingPracticeProgress(uid)
+    fetchCodingPracticeProgress(uid),
+    fetchQuickResponseProgress(uid),
+    fetchDataCenterProgress(uid)
   ]);
 
   let totalCorrect = 0;
@@ -148,6 +152,23 @@ export async function updateUserProfile(
     }
   });
 
+  // Calculate Incidents & DataCenter summary for profile
+  const totalIncidentsCompleted = Object.keys(quickProgress).length;
+  const avgIncidentTimeMs = totalIncidentsCompleted > 0
+    ? Math.round(Object.values(quickProgress).reduce((acc: any, curr: any) => acc + (curr.bestTime || 0), 0) / totalIncidentsCompleted * 1000)
+    : 0;
+
+  const totalDataCenterCompleted = Object.keys(dcProgress).length;
+  const avgDataCenterScore = totalDataCenterCompleted > 0
+    ? Math.round(Object.values(dcProgress).reduce((acc: any, curr: any) => acc + (curr.bestScore || 0), 0) / totalDataCenterCompleted)
+    : 0;
+  const avgDataCenterTimeMs = totalDataCenterCompleted > 0
+    ? Math.round(Object.values(dcProgress).reduce((acc: any, curr: any) => acc + (curr.bestTime || 0), 0) / totalDataCenterCompleted * 1000)
+    : 0;
+  const avgDataCenterMoves = totalDataCenterCompleted > 0
+    ? Math.round(Object.values(dcProgress).reduce((acc: any, curr: any) => acc + (curr.bestMoves || 0), 0) / totalDataCenterCompleted)
+    : 0;
+
   const totalScore = quizScore + codingScore;
   const summaryLevel = getSummaryLevel(accuracy);
   const scoreLevel = getScoreLevel(totalScore);
@@ -211,6 +232,12 @@ export async function updateUserProfile(
       topCategoryAccuracy: topCategoryAccuracy ?? 0,
       topCategoryAvgTimeMs: topCategoryAvgTimeMs ?? 0,
     }),
+    totalIncidentsCompleted,
+    avgIncidentTimeMs,
+    totalDataCenterCompleted,
+    avgDataCenterScore,
+    avgDataCenterTimeMs,
+    avgDataCenterMoves,
     updatedAt: serverTimestamp(),
   };
 
@@ -269,6 +296,18 @@ export async function fetchUsersByLevel(
               (d.data().totalQuestionsAnswered as number) ?? 0,
             totalCodingCompleted:
               (d.data().totalCodingCompleted as number) ?? 0,
+            totalIncidentsCompleted:
+              (d.data().totalIncidentsCompleted as number) ?? 0,
+            avgIncidentTimeMs:
+              (d.data().avgIncidentTimeMs as number) ?? 0,
+            totalDataCenterCompleted:
+              (d.data().totalDataCenterCompleted as number) ?? 0,
+            avgDataCenterScore:
+              (d.data().avgDataCenterScore as number) ?? 0,
+            avgDataCenterTimeMs:
+              (d.data().avgDataCenterTimeMs as number) ?? 0,
+            avgDataCenterMoves:
+              (d.data().avgDataCenterMoves as number) ?? 0,
             overallAccuracy: (d.data().overallAccuracy as number) ?? 0,
             avgTimePerQuestion: (d.data().avgTimePerQuestion as number) ?? 0,
             streak: (d.data().streak as number) ?? 0,
