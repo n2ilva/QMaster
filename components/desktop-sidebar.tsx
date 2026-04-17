@@ -29,7 +29,9 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
     if (href === '/(features)/(main)/practice') {
       return pathname.startsWith('/practice') || 
              pathname.startsWith('/coding-practice') || 
-             pathname.startsWith('/quiz');
+             pathname.startsWith('/quiz') ||
+             pathname.startsWith('/quick-response') ||
+             pathname.startsWith('/datacenter-builder');
     }
 
     return pathname.startsWith(href.replace('/(features)/(main)', ''));
@@ -38,15 +40,15 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
   return (
     <View
       style={{
-        width: 240,
+        width: 260,
         height: '100%',
         backgroundColor: '#0D0F10',
         borderRightWidth: 1,
-        borderRightColor: '#1E2328',
+        borderRightColor: '#1E2228',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        paddingVertical: 24,
+        paddingVertical: 32,
         paddingHorizontal: 16,
       }}>
       {/* Logo */}
@@ -56,29 +58,33 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
         style={({ pressed }) => ({
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10,
+          gap: 12,
           paddingHorizontal: 8,
-          marginBottom: 32,
-          opacity: pressed ? 0.85 : 1,
+          marginBottom: 40,
+          opacity: pressed ? 0.8 : 1,
         })}>
         <View
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
+            width: 40,
+            height: 40,
+            borderRadius: 12,
             backgroundColor: '#3F51B5',
             alignItems: 'center',
             justifyContent: 'center',
+            shadowColor: '#3F51B5',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
           }}>
-          <MaterialIcons name="style" size={20} color="#FFFFFF" />
+          <MaterialIcons name="style" size={24} color="#FFFFFF" />
         </View>
-        <Text style={{ color: '#ECEDEE', fontSize: 17, fontWeight: '700', letterSpacing: 0.3 }}>
+        <Text style={{ color: '#ECEDEE', fontSize: 20, fontWeight: '800', letterSpacing: -0.5 }}>
           QMaster
         </Text>
       </Pressable>
 
       {/* Navigation */}
-      <View style={{ gap: 4, flex: 1 }}>
+      <View style={{ gap: 6, flex: 1 }}>
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -89,30 +95,42 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
-                paddingHorizontal: 12,
-                paddingVertical: 11,
-                borderRadius: 10,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderRadius: 12,
                 backgroundColor: active
-                  ? 'rgba(63,81,181,0.18)'
+                  ? 'rgba(63,81,181,0.12)'
                   : pressed
-                    ? 'rgba(255,255,255,0.05)'
+                    ? 'rgba(255,255,255,0.04)'
                     : 'transparent',
-                borderLeftWidth: 3,
-                borderLeftColor: active ? '#A5B4FC' : 'transparent',
               })}>
               <MaterialIcons
                 name={item.icon}
-                size={20}
-                color={active ? '#A5B4FC' : '#6B7280'}
+                size={22}
+                color={active ? '#A5B4FC' : '#687076'}
               />
               <Text
                 style={{
-                  color: active ? '#A5B4FC' : '#9BA1A6',
-                  fontSize: 14,
-                  fontWeight: active ? '600' : '400',
+                  color: active ? '#ECEDEE' : '#9BA1A6',
+                  fontSize: 15,
+                  fontWeight: active ? '700' : '500',
+                  letterSpacing: 0.2,
                 }}>
                 {item.label}
               </Text>
+              {active && (
+                <View 
+                  style={{ 
+                    position: 'absolute', 
+                    left: -16, 
+                    width: 4, 
+                    height: 24, 
+                    backgroundColor: '#3F51B5', 
+                    borderTopRightRadius: 4, 
+                    borderBottomRightRadius: 4 
+                  }} 
+                />
+              )}
             </Pressable>
           );
         })}
@@ -122,33 +140,33 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
       <View
         style={{
           borderTopWidth: 1,
-          borderTopColor: '#1E2328',
-          paddingTop: 16,
-          gap: 12,
+          borderTopColor: '#1E2228',
+          paddingTop: 24,
+          gap: 16,
         }}>
         {user && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 8 }}>
             <View
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: '#3F51B5',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
                 {user.name.charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={{ flex: 1, overflow: 'hidden' }}>
               <Text
-                style={{ color: '#ECEDEE', fontSize: 13, fontWeight: '600' }}
+                style={{ color: '#ECEDEE', fontSize: 14, fontWeight: '700' }}
                 numberOfLines={1}>
                 {user.name}
               </Text>
               <Text
-                style={{ color: '#687076', fontSize: 11 }}
+                style={{ color: '#687076', fontSize: 12, fontWeight: '500' }}
                 numberOfLines={1}>
                 {user.email}
               </Text>
@@ -163,12 +181,12 @@ export function DesktopSidebar({ onLogout = () => undefined }: { onLogout?: () =
             alignItems: 'center',
             gap: 10,
             paddingHorizontal: 12,
-            paddingVertical: 9,
-            borderRadius: 10,
-            backgroundColor: pressed ? 'rgba(239,68,68,0.1)' : 'transparent',
+            paddingVertical: 10,
+            borderRadius: 12,
+            backgroundColor: pressed ? 'rgba(239,68,68,0.08)' : 'transparent',
           })}>
-          <MaterialIcons name="logout" size={18} color="#6B7280" />
-          <Text style={{ color: '#6B7280', fontSize: 13, fontWeight: '500' }}>Sair</Text>
+          <MaterialIcons name="logout" size={20} color="#687076" />
+          <Text style={{ color: '#687076', fontSize: 14, fontWeight: '600' }}>Sair da conta</Text>
         </Pressable>
       </View>
     </View>
