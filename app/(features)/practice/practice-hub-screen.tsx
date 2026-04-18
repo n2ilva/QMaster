@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 
@@ -161,7 +161,15 @@ export function PracticeHubScreen() {
         </TouchableOpacity>
 
         {/* DataCenter Builder Card */}
-        <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/datacenter-builder')}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            // Defer navigation one tick to sidestep an expo-router web bug
+            // where pushState fires before the synthetic event target settles
+            // (results in "Cannot read properties of null (reading 'dispatchEvent')").
+            setTimeout(() => router.push('/datacenter-builder'), 0);
+          }}
+        >
           <PanelCard compact={false} style={{
             backgroundColor: isDark ? '#1C1F24' : '#FFFFFF',
             borderColor: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.1)',

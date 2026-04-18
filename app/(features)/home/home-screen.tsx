@@ -1,6 +1,6 @@
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View, TouchableOpacity } from 'react-native';
+import { Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { PanelCard } from '@/components/quiz/panel-card';
 import { TRACK_STYLE_FALLBACK, trackStyles } from '@/constants/track-styles';
@@ -12,10 +12,10 @@ import { useAuth } from '@/providers/auth-provider';
 import { useData } from '@/providers/data-provider';
 import { useRouter } from 'expo-router';
 
-import { HomeThemeCard, type HomeThemeItem } from './components/home-theme-card';
-import { HOME_FEATURES } from './home.constants';
-import SupportData from '../coding-practice/Data/suportetecnico.json';
 import DataCenterData from '../coding-practice/Data/datacenterbuild.json';
+import SupportData from '../coding-practice/Data/suportetecnico.json';
+import { type HomeThemeItem } from './components/home-theme-card';
+import { HOME_FEATURES } from './home.constants';
 
 export function HomeScreen() {
   const bottomPadding = useTabContentPadding();
@@ -215,7 +215,13 @@ export function HomeScreen() {
               <TouchableOpacity
                 key={lab.id}
                 activeOpacity={0.7}
-                onPress={() => router.push(lab.route as any)}
+                onPress={() => {
+                  // Defer navigation to the next tick to avoid a race in
+                  // expo-router's web history integration (null dispatchEvent
+                  // target during pushState when the press event is still
+                  // bubbling through react-native-web).
+                  setTimeout(() => router.push(lab.route as any), 0);
+                }}
               >
                 <PanelCard style={{ 
                   backgroundColor: surfaceColor, 
