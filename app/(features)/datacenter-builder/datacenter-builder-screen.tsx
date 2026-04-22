@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -12,6 +12,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  BackHandler,
 } from "react-native";
 
 import { ConfirmExitModal } from "@/components/ui/confirm-exit-modal";
@@ -165,6 +166,40 @@ export function DataCenterBuilderScreen() {
   >(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const navigation = useNavigation();
+  const [pendingAction, setPendingAction] = useState<any>(null);
+  const isExitingRef = useRef(false);
+
+  // Intercept Hardware/Browser Back
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      // If we are NOT in an active exercise, or it's finished, let it go
+      if (!activeLevel || showSuccess || isExitingRef.current) return;
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Show confirmation
+      setPendingAction(e.data.action);
+      setConfirmExitOpen(true);
+    });
+
+    return unsub;
+  }, [navigation, activeLevel, showSuccess]);
+
+  // BackHandler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (activeLevel && !showSuccess && !isExitingRef.current) {
+        setConfirmExitOpen(true);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [activeLevel, showSuccess]);
 
   const successOpacity = useRef(new Animated.Value(0)).current;
   const successScale = useRef(new Animated.Value(0.6)).current;
@@ -1082,10 +1117,18 @@ export function DataCenterBuilderScreen() {
           doesn't accidentally lose an in-progress level. */}
       <ConfirmExitModal
         visible={confirmExitOpen}
-        onCancel={() => setConfirmExitOpen(false)}
+        onCancel={() => {
+          setConfirmExitOpen(false);
+          setPendingAction(null);
+        }}
         onConfirm={() => {
           setConfirmExitOpen(false);
-          handleLeaveLevel();
+          isExitingRef.current = true;
+          if (pendingAction) {
+            navigation.dispatch(pendingAction);
+          } else {
+            handleLeaveLevel();
+          }
         }}
         title="Sair do cenário?"
         message="Seu progresso neste cenário (instalações, cabos e sessão do console) será descartado. Deseja realmente sair?"

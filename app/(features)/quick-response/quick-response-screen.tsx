@@ -7,7 +7,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useData } from '@/providers/data-provider';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -18,7 +18,8 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
+  BackHandler
 } from 'react-native';
 
 import {
@@ -59,6 +60,40 @@ export function QuickResponseScreen() {
   const [showSuccessTransition, setShowSuccessTransition] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<'TODOS' | 'BAIXA' | 'URGENTE' | 'CRÍTICA'>('TODOS');
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const navigation = useNavigation();
+  const [pendingAction, setPendingAction] = useState<any>(null);
+  const isExitingRef = useRef(false);
+
+  // Intercept Hardware/Browser Back
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      // If we are NOT in an active exercise, or it's finished, let it go
+      if (!activeExercise || feedback?.isCorrect || isExitingRef.current) return;
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Show confirmation
+      setPendingAction(e.data.action);
+      setConfirmExitOpen(true);
+    });
+
+    return unsub;
+  }, [navigation, activeExercise, feedback?.isCorrect]);
+
+  // BackHandler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (activeExercise && !feedback?.isCorrect && !isExitingRef.current) {
+        setConfirmExitOpen(true);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [activeExercise, feedback?.isCorrect]);
   const successScale = useRef(new Animated.Value(0)).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
 
@@ -224,13 +259,23 @@ export function QuickResponseScreen() {
   // clean category view.
   const handleConfirmExit = () => {
     setConfirmExitOpen(false);
-    setActiveExercise(null);
-    setFeedback(null);
-    setSelectedIds(new Set());
-    setIsValidated(false);
-    setCurrentAttempts(0);
-    setIsSyncing(false);
-    setShowSuccessTransition(false);
+    isExitingRef.current = true;
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      setActiveExercise(null);
+      setFeedback(null);
+      setSelectedIds(new Set());
+      setIsValidated(false);
+      setCurrentAttempts(0);
+      setIsSyncing(false);
+      setShowSuccessTransition(false);
+    }
+  };
+
+  const handleCancelExit = () => {
+    setConfirmExitOpen(false);
+    setPendingAction(null);
   };
 
   const renderCategoryList = () => (
@@ -540,7 +585,7 @@ export function QuickResponseScreen() {
           category/exercise list back buttons bypass this. */}
       <ConfirmExitModal
         visible={confirmExitOpen}
-        onCancel={() => setConfirmExitOpen(false)}
+        onCancel={handleCancelExit}
         onConfirm={handleConfirmExit}
         title="Abandonar incidente?"
         message="Seu progresso neste incidente será descartado. Deseja realmente sair?"

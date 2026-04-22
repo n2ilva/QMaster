@@ -1,9 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, ScrollView, Text, useColorScheme, View, BackHandler } from 'react-native';
 
 import { GlossaryText } from '@/components/glossary-text';
 import { QuizActionButton } from '@/components/quiz/action-button';
@@ -77,6 +77,40 @@ export function StudySessionScreen() {
   const [saving, setSaving] = useState(false);
   const [questionElapsedSeconds, setQuestionElapsedSeconds] = useState(0);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const navigation = useNavigation();
+  const [pendingAction, setPendingAction] = useState<any>(null);
+  const isExitingRef = useRef(false);
+
+  // Intercept Hardware/Browser Back
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      // If we are NOT in an active exercise, or it's finished, or we are explicitly exiting, let it go
+      if (finished || cards.length === 0 || isExitingRef.current) return;
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Show confirmation
+      setPendingAction(e.data.action);
+      setConfirmExitOpen(true);
+    });
+
+    return unsub;
+  }, [navigation, finished, cards.length]);
+
+  // BackHandler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (!finished && cards.length > 0 && !isExitingRef.current) {
+        setConfirmExitOpen(true);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [finished, cards.length]);
 
   const startTimeRef = useRef(Date.now());
   const questionStartTimeRef = useRef(Date.now());
@@ -575,10 +609,18 @@ export function StudySessionScreen() {
           is intentionally discarded (no save on cancel). */}
       <ConfirmExitModal
         visible={confirmExitOpen}
-        onCancel={() => setConfirmExitOpen(false)}
+        onCancel={() => {
+          setConfirmExitOpen(false);
+          setPendingAction(null);
+        }}
         onConfirm={() => {
           setConfirmExitOpen(false);
-          router.back();
+          isExitingRef.current = true;
+          if (pendingAction) {
+            navigation.dispatch(pendingAction);
+          } else {
+            router.back();
+          }
         }}
         title="Sair do quiz?"
         message="Seu progresso neste quiz será descartado. Deseja realmente sair?"

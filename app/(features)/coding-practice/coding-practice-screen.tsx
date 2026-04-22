@@ -1,8 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Audio } from 'expo-av';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View, BackHandler } from 'react-native';
 import { DraxProvider } from 'react-native-drax';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,6 +90,40 @@ export function CodingPracticeScreen() {
   const [isHintsVisible, setIsHintsVisible] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const navigation = useNavigation();
+  const [pendingAction, setPendingAction] = useState<any>(null);
+  const isExitingRef = useRef(false);
+
+  // Intercept Hardware/Browser Back
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      // If we are NOT in an active exercise, or it's finished, let it go
+      if (!activeExercise || finished || isExitingRef.current) return;
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Show confirmation
+      setPendingAction(e.data.action);
+      setConfirmExitOpen(true);
+    });
+
+    return unsub;
+  }, [navigation, activeExercise, finished]);
+
+  // BackHandler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (activeExercise && !finished && !isExitingRef.current) {
+        setConfirmExitOpen(true);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [activeExercise, finished]);
 
   // Load exercises from db / cache
   React.useEffect(() => {
@@ -261,8 +295,18 @@ export function CodingPracticeScreen() {
 
   const handleConfirmExit = useCallback(async () => {
     setConfirmExitOpen(false);
-    await handleBack();
-  }, [handleBack]);
+    isExitingRef.current = true;
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      await handleBack();
+    }
+  }, [handleBack, pendingAction, navigation]);
+
+  const handleCancelExit = useCallback(() => {
+    setConfirmExitOpen(false);
+    setPendingAction(null);
+  }, []);
 
   const handleRestartExercise = useCallback(async () => {
     setPlaced([]);
@@ -893,7 +937,7 @@ export function CodingPracticeScreen() {
           the finished results view bypasses this dialog. */}
       <ConfirmExitModal
         visible={confirmExitOpen}
-        onCancel={() => setConfirmExitOpen(false)}
+        onCancel={handleCancelExit}
         onConfirm={handleConfirmExit}
         title="Sair do exercício?"
         message="Seu progresso neste quebra-cabeça será descartado. Deseja realmente sair?"
