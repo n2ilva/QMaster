@@ -130,7 +130,7 @@
                             {"id":"t20","value":"}"}
                         ],
                         "extra_tokens": [{"id":"ex1","value":".equals("},{"id":"ex2","value":")"},{"id":"ex3","value":"==="}],
-                        "correct_order": ["t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12","t13","ex1","t15","ex2","t17","t18","t19","t20"],
+                        "correct_order": ["t1","t2","t3","t4","t5","t6","t7","t8","t9","t10","t11","t12","t13","ex1","t15","ex2","t16","t17","t18","t19","t20"],
                         "explanation": "A JVM faz cache de Integers de -128 a 127. Para 500, o '==' compara endereços de memória diferentes. Use sempre .equals() para Wrappers de objetos.",
                         "hints": [
                             "Note que estamos usando `Integer` (Classe) e não `int` (tipo primitivo).",

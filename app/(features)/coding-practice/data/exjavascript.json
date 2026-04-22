@@ -1,0 +1,2531 @@
+{
+  "exercises": [
+    {
+      "id": "js_function_declaration",
+      "title": "Declaração de Função",
+      "description": "Declare uma função chamada 'saudacao' que recebe 'nome' como parâmetro e retorna a variável 'nome'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_funcname": "saudacao",
+        "id_param": "nome"
+      },
+      "availableTokenIds": [
+        "kw_function",
+        "kw_return",
+        "id_funcname",
+        "id_param",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_function",
+        "id_funcname",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_return",
+        "id_param",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Comece com a palavra-chave 'function' seguida do nome 'saudacao' e parênteses.",
+        "Dica 2 (Parâmetro): Dentro dos parênteses, declare o parâmetro 'nome'.",
+        "Dica 3 (Corpo): Use 'return' seguido de 'nome' e ';' dentro das chaves '{ }'."
+      ]
+    },
+    {
+      "id": "js_arrow_function",
+      "title": "Arrow Function",
+      "description": "Crie uma arrow function chamada 'dobrar' que recebe 'n' e retorna 'n' multiplicado por 2.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_funcname": "dobrar",
+        "id_param": "n",
+        "lit_number": "2"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_return",
+        "id_funcname",
+        "id_param",
+        "lit_number",
+        "sym_arrow",
+        "sym_equals",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_asterisk",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_funcname",
+        "sym_equals",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_arrow",
+        "sym_open_brace",
+        "kw_return",
+        "id_param",
+        "sym_asterisk",
+        "lit_number",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare com 'const' seguido do nome da função e '='.",
+        "Dica 2 (Arrow): Após os parênteses com o parâmetro 'n', use '=>' para indicar o corpo.",
+        "Dica 3 (Retorno): Dentro das chaves, use 'return n * 2;'."
+      ]
+    },
+    {
+      "id": "js_if_else",
+      "title": "Condicional If/Else",
+      "description": "Escreva um bloco if/else que verifica se 'idade' é maior ou igual a 18. Se sim, atribua 'adulto' à variável 'resultado', senão atribua 'menor'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Condicional",
+      "tokenLabels": {
+        "id_varname": "resultado",
+        "id_condition": "idade",
+        "lit_string_adulto": "\"adulto\"",
+        "lit_string_menor": "\"menor\"",
+        "lit_number": "18"
+      },
+      "availableTokenIds": [
+        "kw_if",
+        "kw_else",
+        "kw_let",
+        "id_varname",
+        "id_condition",
+        "lit_string_adulto",
+        "lit_string_menor",
+        "lit_number",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_equals",
+        "sym_gte",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_if",
+        "sym_open_paren",
+        "id_condition",
+        "sym_gte",
+        "lit_number",
+        "sym_close_paren",
+        "sym_open_brace",
+        "id_varname",
+        "sym_equals",
+        "lit_string_adulto",
+        "sym_semicolon",
+        "sym_close_brace",
+        "kw_else",
+        "sym_open_brace",
+        "id_varname",
+        "sym_equals",
+        "lit_string_menor",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Comece com 'if' seguido da condição entre parênteses: 'idade >= 18'.",
+        "Dica 2 (Bloco): Cada bloco if e else precisa de chaves '{ }' próprias.",
+        "Dica 3 (Else): Após fechar o bloco 'if', escreva 'else' e abra um novo bloco '{ }'."
+      ]
+    },
+    {
+      "id": "js_array_declaration",
+      "title": "Declaração de Array",
+      "description": "Declare uma constante 'frutas' contendo os elementos 'maçã', 'banana' e 'laranja'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_varname": "frutas",
+        "lit_string_1": "\"maçã\"",
+        "lit_string_2": "\"banana\"",
+        "lit_string_3": "\"laranja\""
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_varname",
+        "lit_string_1",
+        "lit_string_2",
+        "lit_string_3",
+        "sym_equals",
+        "sym_open_bracket",
+        "sym_close_bracket",
+        "sym_comma",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "sym_open_bracket",
+        "lit_string_1",
+        "sym_comma",
+        "lit_string_2",
+        "sym_comma",
+        "lit_string_3",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Use 'const' seguido do nome 'frutas' e '='.",
+        "Dica 2 (Array): Arrays são declarados com colchetes '[' e ']'.",
+        "Dica 3 (Separação): Cada elemento deve ser separado por vírgula ','."
+      ]
+    },
+    {
+      "id": "js_array_push",
+      "title": "Adicionando ao Array",
+      "description": "Use o método push para adicionar o elemento 'uva' ao array 'frutas'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_arrayname": "frutas",
+        "id_method": "push",
+        "lit_string": "\"uva\""
+      },
+      "availableTokenIds": [
+        "id_arrayname",
+        "id_method",
+        "lit_string",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_arrayname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_string",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Comece com o nome do array 'frutas' seguido de ponto '.'.",
+        "Dica 2 (Método): O método para adicionar é 'push'.",
+        "Dica 3 (Argumento): Passe a string 'uva' como argumento entre os parênteses."
+      ]
+    },
+    {
+      "id": "js_for_loop",
+      "title": "Loop For",
+      "description": "Escreva um loop 'for' que inicializa 'i' em 0, executa enquanto 'i' for menor que 5, e incrementa 'i' a cada iteração.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Loop",
+      "tokenLabels": {
+        "id_varname": "i",
+        "lit_number_0": "0",
+        "lit_number_5": "5"
+      },
+      "availableTokenIds": [
+        "kw_for",
+        "kw_let",
+        "id_varname",
+        "lit_number_0",
+        "lit_number_5",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_equals",
+        "sym_lt",
+        "sym_increment",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_for",
+        "sym_open_paren",
+        "kw_let",
+        "id_varname",
+        "sym_equals",
+        "lit_number_0",
+        "sym_semicolon",
+        "id_varname",
+        "sym_lt",
+        "lit_number_5",
+        "sym_semicolon",
+        "id_varname",
+        "sym_increment",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): O for tem três partes separadas por ';' dentro dos parênteses.",
+        "Dica 2 (Partes): Inicialização: 'let i = 0', condição: 'i < 5', incremento: 'i++'.",
+        "Dica 3 (Corpo): O corpo do loop fica entre chaves '{ }'."
+      ]
+    },
+    {
+      "id": "js_while_loop",
+      "title": "Loop While",
+      "description": "Escreva um loop 'while' que executa enquanto a variável 'contador' for menor que 10.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Loop",
+      "tokenLabels": {
+        "id_varname": "contador",
+        "lit_number": "10"
+      },
+      "availableTokenIds": [
+        "kw_while",
+        "id_varname",
+        "lit_number",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_lt",
+        "sym_increment",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_while",
+        "sym_open_paren",
+        "id_varname",
+        "sym_lt",
+        "lit_number",
+        "sym_close_paren",
+        "sym_open_brace",
+        "id_varname",
+        "sym_increment",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): 'while' recebe a condição entre parênteses.",
+        "Dica 2 (Condição): A condição é 'contador < 10'.",
+        "Dica 3 (Cuidado): Não esqueça de incrementar 'contador' dentro do bloco para evitar loop infinito."
+      ]
+    },
+    {
+      "id": "js_class_method",
+      "title": "Classe com Método",
+      "description": "Crie uma classe 'Carro' com um método 'acelerar' que retorna a string 'acelerando'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Classe",
+      "tokenLabels": {
+        "id_classname": "Carro",
+        "id_methodname": "acelerar",
+        "lit_string": "\"acelerando\""
+      },
+      "availableTokenIds": [
+        "kw_class",
+        "kw_return",
+        "id_classname",
+        "id_methodname",
+        "lit_string",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_class",
+        "id_classname",
+        "sym_open_brace",
+        "id_methodname",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_return",
+        "lit_string",
+        "sym_semicolon",
+        "sym_close_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare a classe com 'class Carro {'.",
+        "Dica 2 (Método): Métodos de classe não precisam da palavra-chave 'function'.",
+        "Dica 3 (Retorno): Dentro do método, use 'return' com a string desejada."
+      ]
+    },
+    {
+      "id": "js_class_inheritance",
+      "title": "Herança de Classe",
+      "description": "Crie uma classe 'Cachorro' que herda de 'Animal' usando a palavra-chave 'extends'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Classe",
+      "tokenLabels": {
+        "id_classname": "Cachorro",
+        "id_parentclass": "Animal"
+      },
+      "availableTokenIds": [
+        "kw_class",
+        "kw_extends",
+        "id_classname",
+        "id_parentclass",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_class",
+        "id_classname",
+        "kw_extends",
+        "id_parentclass",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Comece com 'class' seguido do nome da classe filha.",
+        "Dica 2 (Herança): Use 'extends' seguido do nome da classe pai.",
+        "Dica 3 (Corpo): Mesmo vazio, o corpo da classe precisa de '{ }'."
+      ]
+    },
+    {
+      "id": "js_class_super",
+      "title": "Chamada ao Super",
+      "description": "Crie uma classe 'Gato' que herda de 'Animal', com um construtor que recebe 'nome' e chama 'super(nome)'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Classe",
+      "tokenLabels": {
+        "id_classname": "Gato",
+        "id_parentclass": "Animal",
+        "id_param": "nome"
+      },
+      "availableTokenIds": [
+        "kw_class",
+        "kw_extends",
+        "kw_constructor",
+        "kw_super",
+        "id_classname",
+        "id_parentclass",
+        "id_param",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_class",
+        "id_classname",
+        "kw_extends",
+        "id_parentclass",
+        "sym_open_brace",
+        "kw_constructor",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_super",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_semicolon",
+        "sym_close_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare 'class Gato extends Animal {'.",
+        "Dica 2 (Construtor): Dentro do constructor, chame 'super(nome)' antes de qualquer outra coisa.",
+        "Dica 3 (Super): 'super()' invoca o construtor da classe pai e é obrigatório quando se usa 'this' em classes filhas."
+      ]
+    },
+    {
+      "id": "js_ternary_operator",
+      "title": "Operador Ternário",
+      "description": "Atribua à variável 'status' o valor 'aprovado' se 'nota' for maior ou igual a 7, senão 'reprovado', usando o operador ternário.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Condicional",
+      "tokenLabels": {
+        "id_varname": "status",
+        "id_condition": "nota",
+        "lit_number": "7",
+        "lit_string_true": "\"aprovado\"",
+        "lit_string_false": "\"reprovado\""
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_varname",
+        "id_condition",
+        "lit_number",
+        "lit_string_true",
+        "lit_string_false",
+        "sym_equals",
+        "sym_gte",
+        "sym_question",
+        "sym_colon",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_condition",
+        "sym_gte",
+        "lit_number",
+        "sym_question",
+        "lit_string_true",
+        "sym_colon",
+        "lit_string_false",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare 'const status =' seguido da expressão ternária.",
+        "Dica 2 (Ternário): A sintaxe é: condição '?' valor_verdadeiro ':' valor_falso.",
+        "Dica 3 (Condição): A condição aqui é 'nota >= 7'."
+      ]
+    },
+    {
+      "id": "js_switch_statement",
+      "title": "Switch Case",
+      "description": "Escreva um switch que avalia a variável 'dia'. Para o case 1, atribua 'Segunda' à variável 'nome' e use break.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Condicional",
+      "tokenLabels": {
+        "id_varname": "dia",
+        "id_result": "nome",
+        "lit_number": "1",
+        "lit_string": "\"Segunda\""
+      },
+      "availableTokenIds": [
+        "kw_switch",
+        "kw_case",
+        "kw_break",
+        "id_varname",
+        "id_result",
+        "lit_number",
+        "lit_string",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_colon",
+        "sym_equals",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_switch",
+        "sym_open_paren",
+        "id_varname",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_case",
+        "lit_number",
+        "sym_colon",
+        "id_result",
+        "sym_equals",
+        "lit_string",
+        "sym_semicolon",
+        "kw_break",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): 'switch' recebe a variável avaliada entre parênteses.",
+        "Dica 2 (Case): Cada caso é escrito como 'case valor:' seguido das instruções.",
+        "Dica 3 (Break): Sempre use 'break;' para evitar que os casos seguintes sejam executados."
+      ]
+    },
+    {
+      "id": "js_array_map",
+      "title": "Array Map",
+      "description": "Use o método 'map' no array 'numeros' para criar um novo array 'dobrados', multiplicando cada elemento por 2.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_arrayname": "numeros",
+        "id_newarray": "dobrados",
+        "id_param": "n",
+        "id_method": "map",
+        "lit_number": "2"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_return",
+        "id_arrayname",
+        "id_newarray",
+        "id_param",
+        "id_method",
+        "lit_number",
+        "sym_arrow",
+        "sym_equals",
+        "sym_asterisk",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_newarray",
+        "sym_equals",
+        "id_arrayname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_arrow",
+        "id_param",
+        "sym_asterisk",
+        "lit_number",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare 'const dobrados =' seguido do array original com '.map('.",
+        "Dica 2 (Callback): Dentro do map, use uma arrow function: 'n => n * 2'.",
+        "Dica 3 (Resultado): O map retorna um novo array sem modificar o original."
+      ]
+    },
+    {
+      "id": "js_array_filter",
+      "title": "Array Filter",
+      "description": "Use 'filter' no array 'numeros' para criar 'pares', retornando apenas os elementos divisíveis por 2.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_arrayname": "numeros",
+        "id_newarray": "pares",
+        "id_param": "n",
+        "id_method": "filter",
+        "lit_number_2": "2",
+        "lit_number_0": "0"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_arrayname",
+        "id_newarray",
+        "id_param",
+        "id_method",
+        "lit_number_2",
+        "lit_number_0",
+        "sym_arrow",
+        "sym_equals",
+        "sym_percent",
+        "sym_double_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_newarray",
+        "sym_equals",
+        "id_arrayname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_arrow",
+        "id_param",
+        "sym_percent",
+        "lit_number_2",
+        "sym_double_equals",
+        "lit_number_0",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Use 'const pares = numeros.filter('.",
+        "Dica 2 (Condição): A arrow function deve retornar 'n % 2 === 0'.",
+        "Dica 3 (Filter): O filter mantém apenas os elementos onde a condição é verdadeira."
+      ]
+    },
+    {
+      "id": "js_array_reduce",
+      "title": "Array Reduce",
+      "description": "Use 'reduce' no array 'numeros' para calcular a soma total, iniciando o acumulador em 0.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_arrayname": "numeros",
+        "id_varname": "soma",
+        "id_acc": "acc",
+        "id_curr": "curr",
+        "id_method": "reduce",
+        "lit_number": "0"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_arrayname",
+        "id_varname",
+        "id_acc",
+        "id_curr",
+        "id_method",
+        "lit_number",
+        "sym_arrow",
+        "sym_equals",
+        "sym_plus",
+        "sym_dot",
+        "sym_comma",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_arrayname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "sym_open_paren",
+        "id_acc",
+        "sym_comma",
+        "id_curr",
+        "sym_close_paren",
+        "sym_arrow",
+        "id_acc",
+        "sym_plus",
+        "id_curr",
+        "sym_comma",
+        "lit_number",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Use 'const soma = numeros.reduce('.",
+        "Dica 2 (Callback): A função recebe dois parâmetros: acumulador e elemento atual: '(acc, curr) => acc + curr'.",
+        "Dica 3 (Inicial): O segundo argumento do reduce, após a vírgula, é o valor inicial do acumulador: '0'."
+      ]
+    },
+    {
+      "id": "js_object_literal",
+      "title": "Objeto Literal",
+      "description": "Crie uma constante 'pessoa' como objeto literal com as propriedades 'nome' com valor 'Ana' e 'idade' com valor 25.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Objeto",
+      "tokenLabels": {
+        "id_varname": "pessoa",
+        "id_prop1": "nome",
+        "id_prop2": "idade",
+        "lit_string": "\"Ana\"",
+        "lit_number": "25"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_varname",
+        "id_prop1",
+        "id_prop2",
+        "lit_string",
+        "lit_number",
+        "sym_equals",
+        "sym_colon",
+        "sym_comma",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "sym_open_brace",
+        "id_prop1",
+        "sym_colon",
+        "lit_string",
+        "sym_comma",
+        "id_prop2",
+        "sym_colon",
+        "lit_number",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare 'const pessoa =' seguido de '{'.",
+        "Dica 2 (Propriedades): Cada propriedade segue o formato 'chave: valor'.",
+        "Dica 3 (Separação): Propriedades são separadas por vírgula. A última não precisa de vírgula."
+      ]
+    },
+    {
+      "id": "js_destructuring_object",
+      "title": "Desestruturação de Objeto",
+      "description": "Extraia as propriedades 'nome' e 'idade' do objeto 'pessoa' usando desestruturação.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Objeto",
+      "tokenLabels": {
+        "id_objname": "pessoa",
+        "id_prop1": "nome",
+        "id_prop2": "idade"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_objname",
+        "id_prop1",
+        "id_prop2",
+        "sym_equals",
+        "sym_comma",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "sym_open_brace",
+        "id_prop1",
+        "sym_comma",
+        "id_prop2",
+        "sym_close_brace",
+        "sym_equals",
+        "id_objname",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Use 'const {' para iniciar a desestruturação.",
+        "Dica 2 (Propriedades): Liste os nomes das propriedades separados por vírgula dentro das chaves.",
+        "Dica 3 (Fonte): Após '}', use '=' seguido do nome do objeto de origem."
+      ]
+    },
+    {
+      "id": "js_spread_operator",
+      "title": "Operador Spread",
+      "description": "Crie um array 'todos' que combina os arrays 'frutas' e 'legumes' usando o operador spread.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_newarray": "todos",
+        "id_array1": "frutas",
+        "id_array2": "legumes"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_newarray",
+        "id_array1",
+        "id_array2",
+        "sym_equals",
+        "sym_spread",
+        "sym_comma",
+        "sym_open_bracket",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_newarray",
+        "sym_equals",
+        "sym_open_bracket",
+        "sym_spread",
+        "id_array1",
+        "sym_comma",
+        "sym_spread",
+        "id_array2",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Declare 'const todos = [' para iniciar o novo array.",
+        "Dica 2 (Spread): Use '...’ antes de cada array para espalhar seus elementos.",
+        "Dica 3 (Separação): Separe os dois spreads com vírgula dentro dos colchetes."
+      ]
+    },
+    {
+      "id": "js_promise_then",
+      "title": "Promise com Then",
+      "description": "Chame a função 'buscarDados()' e encadeie um '.then' que recebe 'resultado' como parâmetro e o retorna.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_funcname": "buscarDados",
+        "id_param": "resultado",
+        "id_method": "then"
+      },
+      "availableTokenIds": [
+        "kw_return",
+        "id_funcname",
+        "id_param",
+        "id_method",
+        "sym_arrow",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_funcname",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_arrow",
+        "id_param",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): Chame 'buscarDados()' seguido de ponto '.'.",
+        "Dica 2 (Then): Encadeie '.then(' com uma arrow function como argumento.",
+        "Dica 3 (Callback): A arrow function recebe 'resultado' e simplesmente o retorna: 'resultado => resultado'."
+      ]
+    },
+    {
+      "id": "js_async_await",
+      "title": "Async/Await",
+      "description": "Declare uma função assíncrona 'carregarDados' que usa 'await' para chamar 'buscarDados()' e armazena o resultado em uma constante 'dados'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_funcname": "carregarDados",
+        "id_callfunc": "buscarDados",
+        "id_varname": "dados"
+      },
+      "availableTokenIds": [
+        "kw_async",
+        "kw_function",
+        "kw_await",
+        "kw_const",
+        "id_funcname",
+        "id_callfunc",
+        "id_varname",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_equals",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_async",
+        "kw_function",
+        "id_funcname",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "kw_await",
+        "id_callfunc",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Início): Funções assíncronas são declaradas com 'async function'.",
+        "Dica 2 (Await): Use 'await' antes da chamada da função que retorna uma Promise.",
+        "Dica 3 (Armazenamento): Guarde o resultado com 'const dados = await buscarDados();'."
+      ]
+    },
+    {
+      "id": "js_promise_all",
+      "title": "Execução Paralela (Promise.all)",
+      "description": "Use Promise.all para executar dois requests paralelos 'p1' e 'p2', armazenando o resultado em 'resultados'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Asincronismo",
+      "tokenLabels": {
+        "id_var": "resultados",
+        "id_p1": "p1",
+        "id_p2": "p2",
+        "id_method": "all",
+        "id_promise": "Promise"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_await",
+        "id_var",
+        "id_p1",
+        "id_p2",
+        "id_promise",
+        "id_method",
+        "sym_dot",
+        "sym_equals",
+        "sym_open_bracket",
+        "sym_close_bracket",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_comma",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "kw_await",
+        "id_promise",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "sym_open_bracket",
+        "id_p1",
+        "sym_comma",
+        "id_p2",
+        "sym_close_bracket",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Início): 'Promise.all' recebe um array de promessas.",
+        "Dica 2 (Await): Você deve usar 'await' antes de 'Promise.all' para esperar todas terminarem.",
+        "Dica 3 (Sintaxe): Fica assim: 'await Promise.all([p1, p2])'."
+      ]
+    },
+    {
+      "id": "js_export_named",
+      "title": "Exportação Nomeada",
+      "description": "Exporte uma constante chamada 'PI' com o valor 3.14.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Módulo",
+      "tokenLabels": {
+        "id_name": "PI",
+        "lit_number": "3.14"
+      },
+      "availableTokenIds": [
+        "kw_export",
+        "kw_const",
+        "id_name",
+        "sym_equals",
+        "lit_number",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_export",
+        "kw_const",
+        "id_name",
+        "sym_equals",
+        "lit_number",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Módulo): Use a palavra-chave 'export' antes da declaração.",
+        "Dica 2 (Constante): Combine 'export' com 'const' para exportar o valor diretamente."
+      ]
+    },
+    {
+      "id": "js_import_named",
+      "title": "Importação Nomeada",
+      "description": "Importe a função 'soma' do arquivo './calculos.js'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Módulo",
+      "tokenLabels": {
+        "id_item": "soma",
+        "lit_string": "'./calculos.js'"
+      },
+      "availableTokenIds": [
+        "kw_import",
+        "kw_from",
+        "id_item",
+        "lit_string",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_import",
+        "sym_open_brace",
+        "id_item",
+        "sym_close_brace",
+        "kw_from",
+        "lit_string",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Import): Use 'import { item }' para importações nomeadas.",
+        "Dica 2 (Origem): Especifique o arquivo após a palavra 'from'."
+      ]
+    },
+    {
+      "id": "js_export_default",
+      "title": "Exportação Padrão",
+      "description": "Exporte por padrão (default) uma classe chamada 'Usuario'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Módulo",
+      "tokenLabels": {
+        "id_name": "Usuario"
+      },
+      "availableTokenIds": [
+        "kw_export",
+        "kw_default",
+        "kw_class",
+        "id_name",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_export",
+        "kw_default",
+        "kw_class",
+        "id_name",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Default): Use 'export default' para exportar um único item principal do arquivo."
+      ]
+    },
+    {
+      "id": "js_try_catch",
+      "title": "Tratamento de Erros",
+      "description": "Crie um bloco try/catch para capturar um erro e exibir o objeto 'e' no console.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Exceção",
+      "tokenLabels": {
+        "id_err": "e",
+        "id_console": "console",
+        "id_log": "log"
+      },
+      "availableTokenIds": [
+        "kw_try",
+        "kw_catch",
+        "id_err",
+        "id_console",
+        "id_log",
+        "sym_dot",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_try",
+        "sym_open_brace",
+        "sym_close_brace",
+        "kw_catch",
+        "sym_open_paren",
+        "id_err",
+        "sym_close_paren",
+        "sym_open_brace",
+        "id_console",
+        "sym_dot",
+        "id_log",
+        "sym_open_paren",
+        "id_err",
+        "sym_close_paren",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Try): O código que pode falhar fica dentro do bloco 'try'.",
+        "Dica 2 (Catch): O bloco 'catch' recebe o erro como parâmetro entre parênteses."
+      ]
+    },
+    {
+      "id": "js_throw_error",
+      "title": "Lançando Erros",
+      "description": "Lance (throw) um novo erro com a mensagem 'Falhou'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Exceção",
+      "tokenLabels": {
+        "lit_msg": "'Falhou'",
+        "id_error": "Error"
+      },
+      "availableTokenIds": [
+        "kw_throw",
+        "kw_new",
+        "id_error",
+        "lit_msg",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_throw",
+        "kw_new",
+        "id_error",
+        "sym_open_paren",
+        "lit_msg",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Throw): Use a palavra 'throw' para interromper a execução e disparar um erro.",
+        "Dica 2 (Objeto): É boa prática lançar uma 'new Error()'."
+      ]
+    },
+    {
+      "id": "js_optional_chaining",
+      "title": "Acesso Seguro (Optional Chaining)",
+      "description": "Acesse a propriedade 'cidade' de 'usuario.endereco' de forma segura usando o operador '?.'",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_obj": "usuario",
+        "id_p1": "endereco",
+        "id_p2": "cidade"
+      },
+      "availableTokenIds": [
+        "id_obj",
+        "id_p1",
+        "id_p2",
+        "sym_dot",
+        "sym_opt_chain",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_obj",
+        "sym_dot",
+        "id_p1",
+        "sym_opt_chain",
+        "id_p2",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Segurança): O operador '?.' evita erros se a propriedade anterior for nula ou indefinida."
+      ]
+    },
+    {
+      "id": "js_nullish_coalescing",
+      "title": "Operador Nullish Coalescing",
+      "description": "Atribua à variável 'final' o valor de 'preferencia' ?? 'padrao'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_res": "final",
+        "id_v1": "preferencia",
+        "id_v2": "padrao"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_res",
+        "id_v1",
+        "id_v2",
+        "sym_equals",
+        "sym_nullish",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_res",
+        "sym_equals",
+        "id_v1",
+        "sym_nullish",
+        "id_v2",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Nullish): O operador '??' retorna o lado direito apenas se o esquerdo for null ou undefined."
+      ]
+    },
+    {
+      "id": "js_rest_parameters",
+      "title": "Parâmetros Rest",
+      "description": "Crie uma função 'somarTudo' que recebe um número ilimitado de argumentos usando '...args'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_name": "somarTudo",
+        "id_param": "args"
+      },
+      "availableTokenIds": [
+        "kw_function",
+        "id_name",
+        "sym_spread",
+        "id_param",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_function",
+        "id_name",
+        "sym_open_paren",
+        "sym_spread",
+        "id_param",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Rest): Use '...' nos parâmetros da função para agrupar todos os argumentos em um array."
+      ]
+    },
+    {
+      "id": "js_dom_select",
+      "title": "Seleção DOM",
+      "description": "Selecione o elemento com id 'titulo' usando document.getElementById.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "DOM",
+      "tokenLabels": {
+        "id_varname": "el",
+        "id_method": "getElementById",
+        "lit_string": "'titulo'",
+        "id_document": "document"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_document",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_string",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_document",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_string",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Seleção): Use 'document.getElementById()' para buscar um elemento único pelo seu ID."
+      ]
+    },
+    {
+      "id": "js_dom_content",
+      "title": "Conteúdo do Elemento",
+      "description": "Altere o texto (textContent) da variável 'botao' para 'Clique aqui'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "DOM",
+      "tokenLabels": {
+        "id_varname": "botao",
+        "id_propname": "textContent",
+        "lit_string": "'Clique aqui'"
+      },
+      "availableTokenIds": [
+        "id_varname",
+        "sym_dot",
+        "id_propname",
+        "sym_equals",
+        "lit_string",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_varname",
+        "sym_dot",
+        "id_propname",
+        "sym_equals",
+        "lit_string",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Texto): A propriedade 'textContent' é a forma mais segura de alterar o texto de um elemento."
+      ]
+    },
+    {
+      "id": "js_dom_listener",
+      "title": "Evento de Clique",
+      "description": "Adicione um ouvinte de evento 'click' ao elemento 'botao'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "DOM",
+      "tokenLabels": {
+        "id_varname": "botao",
+        "id_method": "addEventListener",
+        "lit_string": "'click'"
+      },
+      "availableTokenIds": [
+        "id_varname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_string",
+        "sym_comma",
+        "sym_arrow",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_varname",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_string",
+        "sym_comma",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_arrow",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Eventos): Use 'addEventListener' para reagir a interações do usuário.",
+        "Dica 2 (Callback): O segundo argumento deve ser uma função (callback)."
+      ]
+    },
+    {
+      "id": "js_set_timeout",
+      "title": "Temporizador (Timeout)",
+      "description": "Use setTimeout para executar uma função após 1000 milissegundos.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Web API",
+      "tokenLabels": {
+        "id_callfunc": "setTimeout",
+        "lit_number": "1000"
+      },
+      "availableTokenIds": [
+        "id_callfunc",
+        "sym_open_paren",
+        "sym_arrow",
+        "sym_comma",
+        "lit_number",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_callfunc",
+        "sym_open_paren",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_arrow",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_comma",
+        "lit_number",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Timeout): setTimeout recebe uma função e o tempo em milissegundos."
+      ]
+    },
+    {
+      "id": "js_json_parse",
+      "title": "Manipulação JSON",
+      "description": "Converta a string JSON 'str' em um objeto JS usando JSON.parse.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_varname": "obj",
+        "id_method": "parse",
+        "id_param": "str",
+        "id_json": "JSON"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_json",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "id_json",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (JSON): O objeto global 'JSON' possui métodos para converter dados."
+      ]
+    },
+    {
+      "id": "js_try_finally",
+      "title": "Bloco Finally",
+      "description": "Crie um bloco try/finally que garante a execução de 'limpar()' independente de erro.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Exceção",
+      "tokenLabels": {
+        "id_func": "limpar"
+      },
+      "availableTokenIds": [
+        "kw_try",
+        "kw_finally",
+        "id_func",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_try",
+        "sym_open_brace",
+        "sym_close_brace",
+        "kw_finally",
+        "sym_open_brace",
+        "id_func",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1 (Finally): O código dentro de 'finally' sempre será executado, com ou sem erro no try."
+      ]
+    },
+    {
+      "id": "js_set_interval",
+      "title": "Repetição (setInterval)",
+      "description": "Use setInterval para executar uma função a cada 2000 milissegundos.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Web API",
+      "tokenLabels": {
+        "id_func": "setInterval",
+        "lit_ms": "2000"
+      },
+      "availableTokenIds": [
+        "id_func",
+        "sym_open_paren",
+        "sym_arrow",
+        "sym_comma",
+        "lit_ms",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_func",
+        "sym_open_paren",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_arrow",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_comma",
+        "lit_ms",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Interval): Diferente de setTimeout, o setInterval executa repetidamente até ser parado."
+      ]
+    },
+    {
+      "id": "js_fetch_api",
+      "title": "Requisição HTTP (Fetch)",
+      "description": "Use a função 'fetch' para buscar dados da URL 'api.com' e use 'await'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Web API",
+      "tokenLabels": {
+        "id_varname": "resp",
+        "id_method": "fetch",
+        "lit_url": "'api.com'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_await",
+        "id_varname",
+        "id_method",
+        "sym_equals",
+        "sym_open_paren",
+        "lit_url",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "kw_await",
+        "id_method",
+        "sym_open_paren",
+        "lit_url",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1 (Fetch): 'fetch' é a API nativa do navegador para requisições HTTP.",
+        "Dica 2 (Await): Como fetch retorna uma Promise, use 'await' para pegar a resposta."
+      ]
+    },
+    {
+      "id": "js_anon_function",
+      "title": "Função Anônima",
+      "description": "Atribua uma função anônima que não recebe parâmetros e retorna a string 'oi' à constante 'falar'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_varname": "falar",
+        "lit_string": "'oi'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_function",
+        "kw_return",
+        "id_varname",
+        "lit_string",
+        "sym_equals",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_varname",
+        "sym_equals",
+        "kw_function",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_return",
+        "lit_string",
+        "sym_semicolon",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Declare a constante 'falar' e atribua usando '='.",
+        "Dica 2: A função anônima é declarada como 'function() { }'.",
+        "Dica 3: Dentro das chaves, use 'return' com a string 'oi'."
+      ]
+    },
+    {
+      "id": "js_generator_function",
+      "title": "Função Geradora (Generator)",
+      "description": "Declare uma função geradora 'contador' que faz o yield do número 1.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Função",
+      "tokenLabels": {
+        "id_funcname": "contador",
+        "lit_number": "1"
+      },
+      "availableTokenIds": [
+        "kw_function",
+        "kw_yield",
+        "id_funcname",
+        "lit_number",
+        "sym_asterisk",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_function",
+        "sym_asterisk",
+        "id_funcname",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_yield",
+        "lit_number",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: Funções geradoras possuem um asterisco (*) logo após a palavra 'function'.",
+        "Dica 2: Em vez de 'return', os generators pausam e enviam valores usando 'yield'."
+      ]
+    },
+    {
+      "id": "js_simple_if",
+      "title": "Condicional If Simples",
+      "description": "Crie um bloco 'if' que verifica se a variável 'ativo' é verdadeira e, dentro dele, atribua 1 à variável 'flag'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Condicional",
+      "tokenLabels": {
+        "id_cond": "ativo",
+        "id_var": "flag",
+        "lit_number": "1"
+      },
+      "availableTokenIds": [
+        "kw_if",
+        "id_cond",
+        "id_var",
+        "lit_number",
+        "sym_equals",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_if",
+        "sym_open_paren",
+        "id_cond",
+        "sym_close_paren",
+        "sym_open_brace",
+        "id_var",
+        "sym_equals",
+        "lit_number",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: Use apenas 'if (ativo)' para testar se é verdadeiro.",
+        "Dica 2: Abra chaves '{' e faça a atribuição 'flag = 1;'."
+      ]
+    },
+    {
+      "id": "js_switch_default",
+      "title": "Switch com Default",
+      "description": "Escreva um 'switch' para a variável 'cor'. Crie apenas o bloco 'default', atribuindo 'desconhecida' à variável 'res'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Condicional",
+      "tokenLabels": {
+        "id_varname": "cor",
+        "id_res": "res",
+        "lit_string": "'desconhecida'"
+      },
+      "availableTokenIds": [
+        "kw_switch",
+        "kw_default",
+        "id_varname",
+        "id_res",
+        "lit_string",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_colon",
+        "sym_equals",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_switch",
+        "sym_open_paren",
+        "id_varname",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_default",
+        "sym_colon",
+        "id_res",
+        "sym_equals",
+        "lit_string",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: Inicie com 'switch(cor) {'.",
+        "Dica 2: Use a palavra 'default' seguida de dois pontos ':'.",
+        "Dica 3: Atribua o valor a 'res' e não é obrigatório usar break no último caso."
+      ]
+    },
+    {
+      "id": "js_array_access",
+      "title": "Acessando Array",
+      "description": "Atribua o primeiro elemento do array 'lista' à constante 'primeiro'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_const": "primeiro",
+        "id_arr": "lista",
+        "lit_number": "0"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_const",
+        "id_arr",
+        "lit_number",
+        "sym_equals",
+        "sym_open_bracket",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_const",
+        "sym_equals",
+        "id_arr",
+        "sym_open_bracket",
+        "lit_number",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: O primeiro elemento de um array está no índice 0.",
+        "Dica 2: Use colchetes '[]' logo após o nome do array para acessar os índices."
+      ]
+    },
+    {
+      "id": "js_array_find",
+      "title": "Array Find",
+      "description": "Use o método 'find' no array 'users' para retornar o usuário onde 'u.id === 1', salvando na constante 'user'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Array",
+      "tokenLabels": {
+        "id_res": "user",
+        "id_arr": "users",
+        "id_method": "find",
+        "id_param": "u",
+        "id_prop": "id",
+        "lit_number": "1"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_res",
+        "id_arr",
+        "id_method",
+        "id_param",
+        "id_prop",
+        "lit_number",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_arrow",
+        "sym_double_equals",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_res",
+        "sym_equals",
+        "id_arr",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_param",
+        "sym_arrow",
+        "id_param",
+        "sym_dot",
+        "id_prop",
+        "sym_double_equals",
+        "lit_number",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Inicie com 'const user = users.find('.",
+        "Dica 2: O callback será uma arrow function: 'u => u.id === 1'."
+      ]
+    },
+    {
+      "id": "js_for_of_loop",
+      "title": "Loop For...Of",
+      "description": "Use um loop 'for...of' para iterar uma constante 'item' sobre o array 'itens', e chame a função 'processar(item)'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Loop",
+      "tokenLabels": {
+        "id_iter": "item",
+        "id_arr": "itens",
+        "id_func": "processar"
+      },
+      "availableTokenIds": [
+        "kw_for",
+        "kw_const",
+        "kw_of",
+        "id_iter",
+        "id_arr",
+        "id_func",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_for",
+        "sym_open_paren",
+        "kw_const",
+        "id_iter",
+        "kw_of",
+        "id_arr",
+        "sym_close_paren",
+        "sym_open_brace",
+        "id_func",
+        "sym_open_paren",
+        "id_iter",
+        "sym_close_paren",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: A sintaxe é 'for (const elemento of array) { }'.",
+        "Dica 2: Dentro do bloco, simplesmente chame a função passando o item."
+      ]
+    },
+    {
+      "id": "js_for_in_loop",
+      "title": "Loop For...In",
+      "description": "Use um loop 'for...in' para iterar uma variável 'prop' sobre o objeto 'obj'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Loop",
+      "tokenLabels": {
+        "id_prop": "prop",
+        "id_obj": "obj"
+      },
+      "availableTokenIds": [
+        "kw_for",
+        "kw_let",
+        "kw_in",
+        "id_prop",
+        "id_obj",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_for",
+        "sym_open_paren",
+        "kw_let",
+        "id_prop",
+        "kw_in",
+        "id_obj",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: 'for...in' itera sobre as chaves (propriedades enumeráveis) de um objeto.",
+        "Dica 2: A declaração entre parênteses fica 'let prop in obj'."
+      ]
+    },
+    {
+      "id": "js_class_instantiation",
+      "title": "Instanciando Classe",
+      "description": "Crie uma instância da classe 'Pessoa' (sem argumentos) e atribua à constante 'p1'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Classe",
+      "tokenLabels": {
+        "id_var": "p1",
+        "id_class": "Pessoa"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_new",
+        "id_var",
+        "id_class",
+        "sym_equals",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "kw_new",
+        "id_class",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Use a palavra-chave 'new' antes do nome da classe para criar um objeto dela."
+      ]
+    },
+    {
+      "id": "js_class_getter",
+      "title": "Classe com Getter",
+      "description": "Dentro de uma classe, declare um método getter chamado 'nomeCompleto' que retorna 'this.nome'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Classe",
+      "tokenLabels": {
+        "id_getter": "nomeCompleto",
+        "id_prop": "nome"
+      },
+      "availableTokenIds": [
+        "kw_get",
+        "kw_return",
+        "kw_this",
+        "id_getter",
+        "id_prop",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_get",
+        "id_getter",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "kw_return",
+        "kw_this",
+        "sym_dot",
+        "id_prop",
+        "sym_semicolon",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: Um getter funciona como uma propriedade, mas é declarado com a palavra 'get' antes do nome do método.",
+        "Dica 2: Não esqueça de usar 'this.' para acessar propriedades da própria classe."
+      ]
+    },
+    {
+      "id": "js_object_bracket_notation",
+      "title": "Acesso com Colchetes",
+      "description": "Acesse a propriedade do objeto 'carro' usando notação de colchetes e a string 'cor', atribuindo à constante 'c'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Objeto",
+      "tokenLabels": {
+        "id_var": "c",
+        "id_obj": "carro",
+        "lit_prop": "'cor'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "id_obj",
+        "lit_prop",
+        "sym_equals",
+        "sym_open_bracket",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "id_obj",
+        "sym_open_bracket",
+        "lit_prop",
+        "sym_close_bracket",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: A notação de colchetes permite acessar propriedades usando strings, como 'obj[\"prop\"]'."
+      ]
+    },
+    {
+      "id": "js_object_keys",
+      "title": "Chaves do Objeto",
+      "description": "Use o método estático 'Object.keys()' no objeto 'usuario' e guarde o array resultante na constante 'chaves'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Objeto",
+      "tokenLabels": {
+        "id_var": "chaves",
+        "id_obj": "usuario",
+        "id_global": "Object",
+        "id_method": "keys"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "id_obj",
+        "id_global",
+        "id_method",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_obj",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: 'Object' é a classe global do JavaScript. Você chama o método 'keys' a partir dela passando o seu objeto como parâmetro."
+      ]
+    },
+    {
+      "id": "js_promise_resolve",
+      "title": "Promise Resolvida",
+      "description": "Crie uma Promise que já resolve imediatamente com a string 'ok' usando 'Promise.resolve' e atribua à constante 'p'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Asincronismo",
+      "tokenLabels": {
+        "id_var": "p",
+        "id_global": "Promise",
+        "id_method": "resolve",
+        "lit_str": "'ok'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "id_global",
+        "id_method",
+        "lit_str",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_str",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: 'Promise.resolve()' é um atalho para criar uma promise pré-resolvida com o valor passado."
+      ]
+    },
+    {
+      "id": "js_promise_race",
+      "title": "Promise Race",
+      "description": "Use 'Promise.race' passando o array 'tarefas'. Aguarde com 'await' e salve o primeiro a terminar na constante 'vencedor'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Asincronismo",
+      "tokenLabels": {
+        "id_var": "vencedor",
+        "id_global": "Promise",
+        "id_method": "race",
+        "id_arr": "tarefas"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "kw_await",
+        "id_var",
+        "id_global",
+        "id_method",
+        "id_arr",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "kw_await",
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "id_arr",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: 'Promise.race' pega um array de Promises e resolve/rejeita assim que a primeira do array terminar."
+      ]
+    },
+    {
+      "id": "js_import_default",
+      "title": "Importação Default",
+      "description": "Importe o export padrão do arquivo './config.js' dando a ele o nome 'Config'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Módulo",
+      "tokenLabels": {
+        "id_var": "Config",
+        "lit_path": "'./config.js'"
+      },
+      "availableTokenIds": [
+        "kw_import",
+        "kw_from",
+        "id_var",
+        "lit_path",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_import",
+        "id_var",
+        "kw_from",
+        "lit_path",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Em exportações padrões, não usamos chaves '{ }' na importação."
+      ]
+    },
+    {
+      "id": "js_import_alias",
+      "title": "Importação com Alias",
+      "description": "Importe todo o conteúdo exportado pelo arquivo './utils.js' e encapsule no objeto 'Utils'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Módulo",
+      "tokenLabels": {
+        "id_alias": "Utils",
+        "lit_path": "'./utils.js'"
+      },
+      "availableTokenIds": [
+        "kw_import",
+        "kw_as",
+        "kw_from",
+        "id_alias",
+        "lit_path",
+        "sym_asterisk",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_import",
+        "sym_asterisk",
+        "kw_as",
+        "id_alias",
+        "kw_from",
+        "lit_path",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Use o asterisco '*' para significar 'tudo'.",
+        "Dica 2: Use 'as' logo em seguida para dar o nome ('alias') de onde esses módulos ficarão agrupados."
+      ]
+    },
+    {
+      "id": "js_try_catch_empty",
+      "title": "Try/Catch Vazio",
+      "description": "Crie a estrutura básica de um bloco try/catch vazio, onde o catch deve receber o parâmetro 'err'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Exceção",
+      "tokenLabels": {
+        "id_param": "err"
+      },
+      "availableTokenIds": [
+        "kw_try",
+        "kw_catch",
+        "id_param",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_try",
+        "sym_open_brace",
+        "sym_close_brace",
+        "kw_catch",
+        "sym_open_paren",
+        "id_param",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: A palavra 'catch' requer parênteses para capturar a variável contendo o erro."
+      ]
+    },
+    {
+      "id": "js_custom_error",
+      "title": "Erro Customizado",
+      "description": "Crie uma classe chamada 'MeuErro' que estende (herda) da classe nativa 'Error'.",
+      "language": "javascript",
+      "difficulty": "avançado",
+      "exerciseType": "Exceção",
+      "tokenLabels": {
+        "id_class": "MeuErro",
+        "id_parent": "Error"
+      },
+      "availableTokenIds": [
+        "kw_class",
+        "kw_extends",
+        "id_class",
+        "id_parent",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_class",
+        "id_class",
+        "kw_extends",
+        "id_parent",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: É como criar qualquer outra herança de classe em JS usando 'extends'."
+      ]
+    },
+    {
+      "id": "js_template_literals",
+      "title": "Template Literals",
+      "description": "Use crases (backticks) para criar uma string interpolada que diga 'Olá, ${nome}' e atribua à constante 'msg'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_var": "msg",
+        "lit_str_part": "Olá, ",
+        "id_interp": "nome"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "lit_str_part",
+        "id_interp",
+        "sym_equals",
+        "sym_backtick",
+        "sym_dollar_brace",
+        "sym_close_brace",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "sym_backtick",
+        "lit_str_part",
+        "sym_dollar_brace",
+        "id_interp",
+        "sym_close_brace",
+        "sym_backtick",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Templates literals abrem e fecham com crase '`'.",
+        "Dica 2: A interpolação de variáveis é feita com o padrão '${variavel}'."
+      ]
+    },
+    {
+      "id": "js_default_parameters",
+      "title": "Parâmetros Padrão",
+      "description": "Declare a função 'saudar' que recebe o parâmetro 'nome' com o valor padrão 'Visitante'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Sintaxe",
+      "tokenLabels": {
+        "id_func": "saudar",
+        "id_param": "nome",
+        "lit_default": "'Visitante'"
+      },
+      "availableTokenIds": [
+        "kw_function",
+        "id_func",
+        "id_param",
+        "lit_default",
+        "sym_equals",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "solution": [
+        "kw_function",
+        "id_func",
+        "sym_open_paren",
+        "id_param",
+        "sym_equals",
+        "lit_default",
+        "sym_close_paren",
+        "sym_open_brace",
+        "sym_close_brace"
+      ],
+      "hints": [
+        "Dica 1: O valor padrão é definido diretamente na lista de argumentos da função, usando o sinal de igual '='."
+      ]
+    },
+    {
+      "id": "js_dom_query_selector",
+      "title": "Selecionando por Classe CSS",
+      "description": "Use 'document.querySelector' para selecionar o elemento com a classe '.card' e salve na constante 'el'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "DOM",
+      "tokenLabels": {
+        "id_var": "el",
+        "id_global": "document",
+        "id_method": "querySelector",
+        "lit_query": "'.card'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "id_global",
+        "id_method",
+        "lit_query",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_query",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: querySelector usa a mesma sintaxe de seletores do CSS. Não esqueça do ponto na string para indicar que é uma classe."
+      ]
+    },
+    {
+      "id": "js_dom_class_list_add",
+      "title": "Manipulando Classes do Elemento",
+      "description": "Adicione a classe 'ativo' ao elemento da variável 'menu' usando a API 'classList.add'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "DOM",
+      "tokenLabels": {
+        "id_var": "menu",
+        "id_prop": "classList",
+        "id_method": "add",
+        "lit_class": "'ativo'"
+      },
+      "availableTokenIds": [
+        "id_var",
+        "id_prop",
+        "id_method",
+        "lit_class",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_var",
+        "sym_dot",
+        "id_prop",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_class",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: Acesso em cadeia: 'elemento.classList.add()'.",
+        "Dica 2: Não use o ponto '.' na string da classe dentro do add, apenas o nome dela."
+      ]
+    },
+    {
+      "id": "js_local_storage_set",
+      "title": "Salvando no Storage",
+      "description": "Use 'localStorage.setItem' para salvar a chave 'tema' com o valor 'escuro'.",
+      "language": "javascript",
+      "difficulty": "iniciante",
+      "exerciseType": "Web API",
+      "tokenLabels": {
+        "id_global": "localStorage",
+        "id_method": "setItem",
+        "lit_key": "'tema'",
+        "lit_val": "'escuro'"
+      },
+      "availableTokenIds": [
+        "id_global",
+        "id_method",
+        "lit_key",
+        "lit_val",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_comma",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_key",
+        "sym_comma",
+        "lit_val",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: setItem recebe dois parâmetros em string separados por vírgula: a chave e o valor."
+      ]
+    },
+    {
+      "id": "js_session_storage_get",
+      "title": "Lendo da Sessão",
+      "description": "Use 'sessionStorage.getItem' para buscar a chave 'token' e salve na constante 'tk'.",
+      "language": "javascript",
+      "difficulty": "intermediário",
+      "exerciseType": "Web API",
+      "tokenLabels": {
+        "id_var": "tk",
+        "id_global": "sessionStorage",
+        "id_method": "getItem",
+        "lit_key": "'token'"
+      },
+      "availableTokenIds": [
+        "kw_const",
+        "id_var",
+        "id_global",
+        "id_method",
+        "lit_key",
+        "sym_equals",
+        "sym_dot",
+        "sym_open_paren",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "solution": [
+        "kw_const",
+        "id_var",
+        "sym_equals",
+        "id_global",
+        "sym_dot",
+        "id_method",
+        "sym_open_paren",
+        "lit_key",
+        "sym_close_paren",
+        "sym_semicolon"
+      ],
+      "hints": [
+        "Dica 1: O 'getItem' precisa apenas do nome da chave cadastrada para puxar a string que está vinculada a ela no browser."
+      ]
+    }
+  ]
+}

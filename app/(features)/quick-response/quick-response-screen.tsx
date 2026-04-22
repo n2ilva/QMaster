@@ -1,6 +1,7 @@
 import { GlossaryText } from '@/components/glossary-text';
 import { PanelCard } from '@/components/quiz/panel-card';
 import { ConfirmExitModal } from '@/components/ui/confirm-exit-modal';
+import { ValidationFab } from '@/components/ui/validation-fab';
 import { useTabContentPadding, useTopContentPadding } from '@/hooks/use-tab-content-padding';
 import { fetchQuickResponseProgress, saveQuickResponseResult } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
@@ -63,6 +64,7 @@ export function QuickResponseScreen() {
   const navigation = useNavigation();
   const [pendingAction, setPendingAction] = useState<any>(null);
   const isExitingRef = useRef(false);
+  const isSmallScreen = width < 768;
 
   // Intercept Hardware/Browser Back
   useEffect(() => {
@@ -468,12 +470,20 @@ export function QuickResponseScreen() {
             })}
           </View>
 
-          {!isValidated && (
+          {!isValidated && !isSmallScreen && (
             <TouchableOpacity onPress={handleValidate} disabled={selectedIds.size === 0 || isSyncing} style={{ backgroundColor: selectedIds.size > 0 ? '#22C55E' : textMuted, paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginTop: 24, opacity: selectedIds.size > 0 ? 1 : 0.5 }}>
               <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>{isSyncing ? 'SINCRONIZANDO...' : 'VALIDAR'}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
+        {!isValidated && isSmallScreen && (
+          <ValidationFab
+            onPress={handleValidate}
+            disabled={selectedIds.size === 0 || isSyncing}
+            icon="fact-check"
+            bottomInset={bottomPadding}
+          />
+        )}
       </View>
     );
   };

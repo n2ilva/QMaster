@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Audio } from 'expo-av';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View, BackHandler } from 'react-native';
+import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View, BackHandler, useWindowDimensions } from 'react-native';
 import { DraxProvider } from 'react-native-drax';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { useAuth } from '@/providers/auth-provider';
 
 import { QuizStatCard } from '@/components/quiz/stat-card';
 import { ConfirmExitModal } from '@/components/ui/confirm-exit-modal';
+import { ValidationFab } from '@/components/ui/validation-fab';
 import { QUIZ_COLORS } from '@/constants/quiz-ui';
 import { StudyCompletionOverlay } from '../study-session/components/study-completion-overlay';
 import { StudyFeedbackOverlay } from '../study-session/components/study-feedback-overlay';
@@ -54,6 +55,8 @@ export function CodingPracticeScreen() {
   const topPadding = useTopContentPadding();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 768;
 
   const { lang: initialLangId } = useLocalSearchParams<{ lang: string }>();
   const [selectedLang, setSelectedLang] = useState<LanguageInfo>(() => {
@@ -721,14 +724,23 @@ export function CodingPracticeScreen() {
                     />
 
                     {/* ④ Botão verificar */}
-                    <ValidateButton
-                      onPress={handleValidate}
-                      disabled={placed.filter(p => p.tokenId !== 'sym_newline').length < activeExercise.solution.length}
-                      isCorrect={isCorrect}
-                    />
+                    {!isSmallScreen && (
+                      <ValidateButton
+                        onPress={handleValidate}
+                        disabled={placed.filter(p => p.tokenId !== 'sym_newline').length < activeExercise.solution.length}
+                        isCorrect={isCorrect}
+                      />
+                    )}
                   </View>
                 </View>
               </View>
+              {isSmallScreen && (
+                <ValidationFab
+                  onPress={handleValidate}
+                  disabled={placed.filter(p => p.tokenId !== 'sym_newline').length < activeExercise.solution.length}
+                  bottomInset={Math.max(insets.bottom, 12)}
+                />
+              )}
             </View>
           </DraxProvider>
         </GestureHandlerRootView>

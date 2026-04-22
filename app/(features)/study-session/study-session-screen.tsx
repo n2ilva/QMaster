@@ -3,7 +3,7 @@ import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, Text, useColorScheme, View, BackHandler } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, ScrollView, Text, useColorScheme, View, BackHandler, useWindowDimensions } from 'react-native';
 
 import { GlossaryText } from '@/components/glossary-text';
 import { QuizActionButton } from '@/components/quiz/action-button';
@@ -33,6 +33,7 @@ import { StudyCompletionOverlay } from './components/study-completion-overlay';
 import { StudyFeedbackOverlay } from './components/study-feedback-overlay';
 import { OPTION_LETTERS } from './study-session.constants';
 import { ConfirmExitModal } from '@/components/ui/confirm-exit-modal';
+import { ValidationFab } from '@/components/ui/validation-fab';
 
 type AnswerState = {
   selectedIndex: number | null;
@@ -183,6 +184,8 @@ export function StudySessionScreen() {
 
   const layoutMode = useLayoutMode();
   const isDesktopLayout = layoutMode === 'desktop';
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 768;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const topPadding = useTopContentPadding();
@@ -585,7 +588,9 @@ export function StudySessionScreen() {
                     </View>
                   )}
 
-                  <QuizActionButton label={currentIndex + 1 < totalCards ? 'Próxima' : 'Ver resultado'} icon={currentIndex + 1 < totalCards ? 'arrow-forward' : 'emoji-events'} onPress={handleNext} variant="primary-solid" style={{ marginTop: 16 }} />
+                  {!isSmallScreen && (
+                    <QuizActionButton label={currentIndex + 1 < totalCards ? 'Próxima' : 'Ver resultado'} icon={currentIndex + 1 < totalCards ? 'arrow-forward' : 'emoji-events'} onPress={handleNext} variant="primary-solid" style={{ marginTop: 16 }} />
+                  )}
                 </View>
               )}
             </>
@@ -604,6 +609,12 @@ export function StudySessionScreen() {
         ringOpacity={completionRingOpacity}
       />
       <StudyFeedbackOverlay feedbackType={feedbackType} iconOpacity={iconOpacity} iconScale={iconScale} />
+      {isSmallScreen && answer.revealed && !finished && (
+        <ValidationFab
+          onPress={handleNext}
+          icon={currentIndex + 1 < totalCards ? 'arrow-forward' : 'emoji-events'}
+        />
+      )}
 
       {/* Confirm exit — intercepts the in-progress quiz back button. Progress
           is intentionally discarded (no save on cancel). */}

@@ -2,7 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Audio } from 'expo-av';
 import { router, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View, StyleSheet, Platform, BackHandler } from 'react-native';
+import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, useColorScheme, View, StyleSheet, Platform, BackHandler, useWindowDimensions } from 'react-native';
 import { DraxProvider, DraxView } from 'react-native-drax';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,11 +11,12 @@ import { useTabContentPadding, useTopContentPadding } from '@/hooks/use-tab-cont
 import { useAuth } from '@/providers/auth-provider';
 import { QuizStatCard } from '@/components/quiz/stat-card';
 import { ConfirmExitModal } from '@/components/ui/confirm-exit-modal';
+import { ValidationFab } from '@/components/ui/validation-fab';
 
 import { DEBUG_COLORS, DEBUG_LANGUAGES, LEVEL_CONFIG } from './ache-o-erro.constants';
 import { DebugPracticeStore, GlobalProgress } from './ache-o-erro.store';
-import { DebugExercise, LanguageInfo, Level, PlacedToken, Token } from './ache-o-erro.types';
-import { ExerciseCard, LanguageSelector, LevelCard, DebugToken, ValidateFAB } from './components/ache-o-erro-components';
+import { DebugExercise, LanguageInfo, Level, PlacedToken } from './ache-o-erro.types';
+import { ExerciseCard, LanguageSelector, LevelCard, DebugToken, ExerciseHeader, HintsModal } from './components/ache-o-erro-components';
 import { StudyCompletionOverlay } from '../study-session/components/study-completion-overlay';
 
 function uid() {
@@ -27,8 +28,10 @@ export function AcheOErroScreen() {
   const topPadding = useTopContentPadding();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const isSmallScreen = width < 768;
 
   // Navigation State
   const [selectedLang, setSelectedLang] = useState<LanguageInfo>(DEBUG_LANGUAGES[0]);
@@ -48,6 +51,8 @@ export function AcheOErroScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCompletionEffect, setShowCompletionEffect] = useState(false);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const [showHintsModal, setShowHintsModal] = useState(false);
+  const [currentHintIndex, setCurrentHintIndex] = useState(0);
 
   // Animation values for completion
   const completionBgOpacity = useRef(new Animated.Value(0)).current;
@@ -131,6 +136,8 @@ export function AcheOErroScreen() {
 
   const handleSelectExercise = useCallback((ex: DebugExercise) => {
     setActiveExercise(ex);
+    setCurrentHintIndex(0);
+    setShowHintsModal(false);
     initExercise(ex);
   }, [initExercise]);
 
@@ -252,6 +259,47 @@ export function AcheOErroScreen() {
     setIsCorrect(null);
   };
 
+  const parseDragPayload = useCallback((payload: string) => {
+    if (payload.startsWith('pool_')) return { source: 'pool' as const, instanceId: payload.replace('pool_', '') };
+    if (payload.startsWith('code_')) return { source: 'code' as const, instanceId: payload.replace('code_', '') };
+    return null;
+  }, []);
+
+  const placedRows = useMemo(() => {
+    const rows: { tokens: (PlacedToken & { globalIndex: number })[]; indent: number }[] = [];
+    let currentTokens: (PlacedToken & { globalIndex: number })[] = [];
+    let currentIndent = 0;
+
+    placed.forEach((p, idx) => {
+      const val = p.value.trim();
+      if (val === '}') {
+        if (currentTokens.length > 0) {
+          rows.push({ tokens: currentTokens, indent: currentIndent });
+          currentTokens = [];
+        }
+        currentIndent = Math.max(0, currentIndent - 1);
+        currentTokens.push({ ...p, globalIndex: idx });
+        const next = placed[idx + 1];
+        if (next && (next.value.trim().toLowerCase() === 'else' || next.value.trim() === ';')) {
+          // Keep together
+        } else {
+          rows.push({ tokens: currentTokens, indent: currentIndent });
+          currentTokens = [];
+        }
+      } else {
+        currentTokens.push({ ...p, globalIndex: idx });
+        if (val === '{' || val === ';' || val === ':') {
+          rows.push({ tokens: currentTokens, indent: currentIndent });
+          currentTokens = [];
+          if (val === '{' || val === ':') currentIndent++;
+        }
+      }
+    });
+
+    if (currentTokens.length > 0) rows.push({ tokens: currentTokens, indent: currentIndent });
+    return rows;
+  }, [placed]);
+
   // Rendering Helpers
   const renderSelection = () => {
     const langExercises = allExercises.filter(e => e.language === selectedLang.id);
@@ -306,6 +354,9 @@ export function AcheOErroScreen() {
 
   const renderGame = () => {
     if (!activeExercise) return null;
+    const hints = activeExercise.hints ?? [];
+    const totalHints = hints.length;
+    const hasNextHint = currentHintIndex < totalHints - 1;
 
     if (finished) {
       return (
@@ -368,66 +419,32 @@ export function AcheOErroScreen() {
       <View style={{ flex: 1 }}>
         <DraxProvider>
           <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-            <View style={styles.gameHeader}>
-            <TouchableOpacity onPress={() => setConfirmExitOpen(true)} style={styles.backButton}>
-              <MaterialIcons name="close" size={20} color={isDark ? '#ECEDEE' : '#11181C'} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.gameTitle}>{activeExercise.title}</Text>
-              <Text style={styles.gameSubtitle}>{activeExercise.description}</Text>
-            </View>
-          </View>
+            <ExerciseHeader
+              exercise={activeExercise}
+              isDark={isDark}
+              hintCount={totalHints}
+              onClose={() => setConfirmExitOpen(true)}
+              onOpenHints={() => {
+                setCurrentHintIndex(0);
+                setShowHintsModal(true);
+              }}
+            />
 
           {/* Code Area */}
           <View style={[styles.codeArea, { borderColor: isCorrect === false ? DEBUG_COLORS.error : DEBUG_COLORS.border }]}>
             <ScrollView contentContainerStyle={{ padding: 12 }}>
-                {(() => {
-                  const rows: { tokens: (PlacedToken & { globalIndex: number })[], indent: number }[] = [];
-                  let currentTokens: (PlacedToken & { globalIndex: number })[] = [];
-                  let currentIndent = 0;
-
-                  placed.forEach((p, idx) => {
-                    const val = p.value.trim();
-                    if (val === '}') {
-                      if (currentTokens.length > 0) {
-                        rows.push({ tokens: currentTokens, indent: currentIndent });
-                        currentTokens = [];
-                      }
-                      currentIndent = Math.max(0, currentIndent - 1);
-                      currentTokens.push({ ...p, globalIndex: idx });
-                      const next = placed[idx + 1];
-                      if (next && (next.value.trim().toLowerCase() === 'else' || next.value.trim() === ';')) {
-                         // Keep together
-                      } else {
-                         rows.push({ tokens: currentTokens, indent: currentIndent });
-                         currentTokens = [];
-                      }
-                    } else {
-                      currentTokens.push({ ...p, globalIndex: idx });
-                      if (val === '{' || val === ';' || val === ':') {
-                        rows.push({ tokens: currentTokens, indent: currentIndent });
-                        currentTokens = [];
-                        if (val === '{' || val === ':') currentIndent++;
-                      }
-                    }
-                  });
-                  if (currentTokens.length > 0) rows.push({ tokens: currentTokens, indent: currentIndent });
-
-                  return (
-                    <>
-                      {rows.map((row, rowIdx) => (
+                <>
+                      {placedRows.map((row, rowIdx) => (
                         <View key={`row-${rowIdx}`} style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginLeft: row.indent * 20, marginBottom: 2 }}>
                           {row.tokens.map((p) => (
                             <View key={p.instanceId} style={{ flexDirection: 'row', alignItems: 'center' }}>
                               <DraxView
                                 receptive
                                 onReceiveDragDrop={(e) => {
-                                  const payload = e.dragged.payload as string;
-                                  if (payload.startsWith('pool_')) {
-                                    handleAddToPlaced(payload.replace('pool_', ''), p.globalIndex);
-                                  } else if (payload.startsWith('code_')) {
-                                    handleReorderPlaced(payload.replace('code_', ''), p.globalIndex);
-                                  }
+                                  const drag = parseDragPayload(e.dragged.payload as string);
+                                  if (!drag) return;
+                                  if (drag.source === 'pool') handleAddToPlaced(drag.instanceId, p.globalIndex);
+                                  if (drag.source === 'code') handleReorderPlaced(drag.instanceId, p.globalIndex);
                                 }}
                               >
                                 <View style={styles.dropZone} />
@@ -440,12 +457,10 @@ export function AcheOErroScreen() {
                                  onPress={() => handleRemoveFromPlaced(p.instanceId)}
                                  receptive
                                  onReceiveDragDrop={(e) => {
-                                   const payload = e.dragged.payload as string;
-                                   if (payload.startsWith('pool_')) {
-                                     handleAddToPlaced(payload.replace('pool_', ''), p.globalIndex);
-                                   } else if (payload.startsWith('code_')) {
-                                     handleReorderPlaced(payload.replace('code_', ''), p.globalIndex);
-                                   }
+                                   const drag = parseDragPayload(e.dragged.payload as string);
+                                   if (!drag) return;
+                                   if (drag.source === 'pool') handleAddToPlaced(drag.instanceId, p.globalIndex);
+                                   if (drag.source === 'code') handleReorderPlaced(drag.instanceId, p.globalIndex);
                                  }}
                               />
                             </View>
@@ -459,12 +474,10 @@ export function AcheOErroScreen() {
                          receptive
                          receivingStyle={{ backgroundColor: 'rgba(34, 197, 94, 0.05)', borderWidth: 1, borderColor: '#22C55E44', borderStyle: 'dotted' }}
                          onReceiveDragDrop={(e) => {
-                           const payload = e.dragged.payload as string;
-                           if (payload.startsWith('pool_')) {
-                             handleAddToPlaced(payload.replace('pool_', ''), placed.length);
-                           } else if (payload.startsWith('code_')) {
-                             handleReorderPlaced(payload.replace('code_', ''), placed.length);
-                           }
+                           const drag = parseDragPayload(e.dragged.payload as string);
+                           if (!drag) return;
+                           if (drag.source === 'pool') handleAddToPlaced(drag.instanceId, placed.length);
+                           if (drag.source === 'code') handleReorderPlaced(drag.instanceId, placed.length);
                          }}
                       >
                          {placed.length === 0 ? (
@@ -473,9 +486,7 @@ export function AcheOErroScreen() {
                             <View style={{ width: 40, height: 4, backgroundColor: '#1E2328', borderRadius: 2 }} />
                          )}
                       </DraxView>
-                    </>
-                  );
-                })()}
+                </>
             </ScrollView>
           </View>
 
@@ -513,7 +524,15 @@ export function AcheOErroScreen() {
         </ScrollView>
       </DraxProvider>
 
-        <ValidateFAB onPress={handleValidate} disabled={placed.length === 0} />
+        <ValidationFab onPress={handleValidate} disabled={placed.length === 0} bottomInset={isSmallScreen ? 0 : 4} />
+
+        <HintsModal
+          visible={showHintsModal}
+          hints={hints}
+          currentHintIndex={currentHintIndex}
+          onClose={() => setShowHintsModal(false)}
+          onNextHint={() => setCurrentHintIndex((idx) => Math.min(idx + 1, totalHints - 1))}
+        />
       </View>
     );
   };
@@ -612,23 +631,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1F24',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  gameHeader: {
-    padding: 12,
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  gameTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#ECEDEE',
-  },
-  gameSubtitle: {
-    fontSize: 14,
-    color: DEBUG_COLORS.textMuted,
-    marginTop: 4,
-    lineHeight: 20,
   },
   codeArea: {
     margin: 8,

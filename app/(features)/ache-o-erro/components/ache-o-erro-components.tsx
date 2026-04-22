@@ -1,8 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
-import { Animated, Modal, Pressable, ScrollView, Text, TouchableOpacity, View, useColorScheme, useWindowDimensions, Platform } from 'react-native';
-import { DraxView } from 'react-native-drax';
+import { Modal, Text, TouchableOpacity, View, useColorScheme, useWindowDimensions, Platform } from 'react-native';
+import { DraggableTokenWrapper } from '@/components/ui/draggable-token-wrapper';
 import { DEBUG_COLORS, LEVEL_CONFIG } from '@/app/(features)/ache-o-erro/ache-o-erro.constants';
 import { DebugExercise, PlacedToken, Token, Level, LanguageInfo } from '@/app/(features)/ache-o-erro/ache-o-erro.types';
 
@@ -207,20 +207,37 @@ export function DebugToken({
   onReceiveDragDrop 
 }: DebugTokenProps) {
   const isPool = variant === 'pool';
+  const isTouchDevice =
+    Platform.OS !== 'web' ||
+    (typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches);
+  const dragLiftY = isTouchDevice ? -64 : 0;
   
   return (
-    <DraxView
+    <DraggableTokenWrapper
       dragPayload={isPool ? `pool_${instanceId}` : `code_${instanceId}`}
       receptive={receptive}
       onReceiveDragDrop={onReceiveDragDrop}
-      draggingStyle={{ opacity: 0.5 }}
+      draggingStyle={{
+        opacity: 0.9,
+        transform: [{ translateY: dragLiftY }],
+        zIndex: 1000,
+      }}
       dragReleasedStyle={{ opacity: 1 }}
       hoverDraggingStyle={{ opacity: 0.8 }}
       receivingStyle={{
         borderColor: '#10B981',
-        borderWidth: 1.5,
+        borderWidth: 2.5,
         borderRadius: 5,
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: 'rgba(16, 185, 129, 0.22)',
+        transform: [{ scale: 1.22 }],
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.45,
+        shadowRadius: 10,
+        elevation: 8,
+        zIndex: 30,
       }}
     >
       <TouchableOpacity
@@ -242,7 +259,7 @@ export function DebugToken({
           {token.value}
         </Text>
       </TouchableOpacity>
-    </DraxView>
+    </DraggableTokenWrapper>
   );
 }
 
@@ -274,5 +291,131 @@ export function ValidateFAB({ onPress, disabled }: { onPress: () => void; disabl
     >
       <MaterialIcons name="check" size={32} color="#FFFFFF" />
     </TouchableOpacity>
+  );
+}
+
+type ExerciseHeaderProps = {
+  exercise: DebugExercise;
+  isDark: boolean;
+  hintCount: number;
+  onClose: () => void;
+  onOpenHints: () => void;
+};
+
+export function ExerciseHeader({ exercise, isDark, hintCount, onClose, onOpenHints }: ExerciseHeaderProps) {
+  return (
+    <View style={{ padding: 12, flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+      <TouchableOpacity onPress={onClose} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#1C1F24', alignItems: 'center', justifyContent: 'center' }}>
+        <MaterialIcons name="close" size={20} color={isDark ? '#ECEDEE' : '#11181C'} />
+      </TouchableOpacity>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#ECEDEE' }}>{exercise.title}</Text>
+        <Text style={{ fontSize: 14, color: DEBUG_COLORS.textMuted, marginTop: 4, lineHeight: 20 }}>{exercise.description}</Text>
+      </View>
+      <TouchableOpacity
+        onPress={onOpenHints}
+        disabled={hintCount === 0}
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 21,
+          backgroundColor: '#1C1F24',
+          borderWidth: 1,
+          borderColor: '#30363D',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          opacity: hintCount === 0 ? 0.5 : 1,
+        }}
+      >
+        <MaterialIcons name="help-outline" size={20} color="#ECEDEE" />
+        <View
+          style={{
+            position: 'absolute',
+            top: -4,
+            right: -2,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            backgroundColor: DEBUG_COLORS.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 4,
+          }}
+        >
+          <Text style={{ color: '#11181C', fontSize: 10, fontWeight: '900' }}>{hintCount}</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+type HintsModalProps = {
+  visible: boolean;
+  hints: string[];
+  currentHintIndex: number;
+  onClose: () => void;
+  onNextHint: () => void;
+};
+
+export function HintsModal({ visible, hints, currentHintIndex, onClose, onNextHint }: HintsModalProps) {
+  const totalHints = hints.length;
+  const hasNextHint = currentHintIndex < totalHints - 1;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 420,
+            backgroundColor: '#1C1F24',
+            borderRadius: 18,
+            borderWidth: 1,
+            borderColor: '#30363D',
+            padding: 18,
+            gap: 10,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#ECEDEE' }}>Dicas do Exercício</Text>
+            <TouchableOpacity onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#252930', alignItems: 'center', justifyContent: 'center' }}>
+              <MaterialIcons name="close" size={18} color="#ECEDEE" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={{ fontSize: 12, fontWeight: '700', color: DEBUG_COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.7 }}>
+            Dica {Math.min(currentHintIndex + 1, totalHints)} de {totalHints}
+          </Text>
+          <Text style={{ fontSize: 14, lineHeight: 22, color: '#D1D5DB', minHeight: 88 }}>
+            {totalHints > 0 ? hints[currentHintIndex] : 'Nenhuma dica disponível para este exercício.'}
+          </Text>
+
+          <View style={{ marginTop: 8, flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{ flex: 1, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3A3F47', backgroundColor: '#252930' }}
+            >
+              <Text style={{ color: '#ECEDEE', fontWeight: '700', fontSize: 14 }}>Fechar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={!hasNextHint}
+              onPress={onNextHint}
+              style={{
+                flex: 1,
+                height: 44,
+                borderRadius: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: DEBUG_COLORS.primary,
+                opacity: hasNextHint ? 1 : 0.55,
+              }}
+            >
+              <Text style={{ color: '#11181C', fontWeight: '800', fontSize: 14 }}>{hasNextHint ? 'Próxima dica' : 'Última dica'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }

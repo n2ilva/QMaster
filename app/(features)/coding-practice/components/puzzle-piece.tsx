@@ -1,7 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Platform, Pressable, Text, TextInput, TouchableOpacity, View, Animated } from 'react-native';
-import { DraxView } from 'react-native-drax';
+import { DraggableTokenWrapper } from '@/components/ui/draggable-token-wrapper';
 
 import { TOKEN_CATEGORY_COLORS } from '../coding-practice.constants';
 import { type SyntaxToken } from '../coding-practice.types';
@@ -120,14 +120,14 @@ export function PuzzlePiece({
     }
 
     return (
-      <DraxView
+      <DraggableTokenWrapper
         dragPayload={`kb_${instanceId}`}
         draggingStyle={{ opacity: 0.5 }}
         dragReleasedStyle={{ opacity: 0.5 }}
         hoverDraggingStyle={{ opacity: 0.8 }}
       >
         {keyContent}
-      </DraxView>
+      </DraggableTokenWrapper>
     );
   }
 
@@ -141,7 +141,7 @@ export function PuzzlePiece({
         borderRadius: 11,
         opacity: glowAnim,
       }} />
-      <DraxView
+      <DraggableTokenWrapper
         dragPayload={`ans_${instanceId}`}
         draggingStyle={{ opacity: 0.5 }}
       >
@@ -181,7 +181,7 @@ export function PuzzlePiece({
           {displayLabel}
         </Text>
       </TouchableOpacity>
-      </DraxView>
+      </DraggableTokenWrapper>
       {renderModal()}
     </View>
   );

@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 import { ConfirmExitModal } from "@/components/ui/confirm-exit-modal";
+import { ValidationFab } from "@/components/ui/validation-fab";
 import { useTabContentPadding, useTopContentPadding } from "@/hooks/use-tab-content-padding";
 import {
   fetchDataCenterProgress,
@@ -31,7 +32,6 @@ import {
   FAB_SIZE,
   FAB_STACK_GAP,
   WorkbenchFab,
-  WorkbenchValidateFab,
 } from "./components/workbench-fab";
 import { WorkbenchToolbar } from "./components/workbench-toolbar";
 import {
@@ -864,8 +864,9 @@ export function DataCenterBuilderScreen() {
         <>
           {/* Validate sits on the bottom (thumb-friendly zone); the help
               speed-dial is stacked just above it. */}
-          <WorkbenchValidateFab
+          <ValidationFab
             onPress={handleValidate}
+            icon="fact-check"
             bottomInset={bottomPadding}
           />
           <WorkbenchFab
