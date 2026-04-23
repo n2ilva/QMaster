@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, Text, View, useColorScheme } from 'react-native';
 import { SCORE_LEVEL_COLORS, SCORE_LEVEL_EMOJIS } from '@/constants/score-levels';
 import { type UserProfile } from '@/lib/api';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 type CommunityUserCardProps = {
   userProfile: UserProfile;
@@ -100,30 +101,37 @@ export function CommunityUserCard({
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 6, marginTop: 4 }}>
             {userProfile.totalQuestionsAnswered > 0 && (
-              <Text style={{ color: textSecondary, fontSize: 11 }}>Quiz: {userProfile.totalQuestionsAnswered}</Text>
+              <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                <MaterialIcons name="school" size={12} color={textSecondary} />
+                <Text style={{ color: textSecondary, fontSize: 11 }}>{userProfile.totalQuestionsAnswered}</Text>
+              </View>
             )}
             {userProfile.totalCodingCompleted > 0 && (
               <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                 {userProfile.totalQuestionsAnswered > 0 && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
-                <Text style={{ color: textSecondary, fontSize: 11 }}>Códigos: {userProfile.totalCodingCompleted}</Text>
+                <MaterialIcons name="code" size={12} color={textSecondary} />
+                <Text style={{ color: textSecondary, fontSize: 11 }}>{userProfile.totalCodingCompleted}</Text>
               </View>
             )}
             {(userProfile.totalDebugCompleted ?? 0) > 0 && (
               <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                 {(userProfile.totalQuestionsAnswered > 0 || userProfile.totalCodingCompleted > 0) && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
-                <Text style={{ color: textSecondary, fontSize: 11 }}>Bugs: {userProfile.totalDebugCompleted}</Text>
+                <MaterialIcons name="bug-report" size={12} color={textSecondary} />
+                <Text style={{ color: textSecondary, fontSize: 11 }}>{userProfile.totalDebugCompleted}</Text>
               </View>
             )}
             {(userProfile.totalIncidentsCompleted ?? 0) > 0 && (
               <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                 {(userProfile.totalQuestionsAnswered > 0 || userProfile.totalCodingCompleted > 0 || (userProfile.totalDebugCompleted ?? 0) > 0) && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
-                <Text style={{ color: textSecondary, fontSize: 11 }}>Incidentes: {userProfile.totalIncidentsCompleted}</Text>
+                <MaterialIcons name="build" size={12} color={textSecondary} />
+                <Text style={{ color: textSecondary, fontSize: 11 }}>{userProfile.totalIncidentsCompleted}</Text>
               </View>
             )}
             {(userProfile.totalDataCenterCompleted ?? 0) > 0 && (
               <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
                 {(userProfile.totalQuestionsAnswered > 0 || userProfile.totalCodingCompleted > 0 || (userProfile.totalDebugCompleted ?? 0) > 0 || (userProfile.totalIncidentsCompleted ?? 0) > 0) && <Text style={{ color: textSecondary, fontSize: 11 }}>•</Text>}
-                <Text style={{ color: textSecondary, fontSize: 11 }}>DC: {userProfile.totalDataCenterCompleted}</Text>
+                <MaterialIcons name="dns" size={12} color={textSecondary} />
+                <Text style={{ color: textSecondary, fontSize: 11 }}>{userProfile.totalDataCenterCompleted}</Text>
               </View>
             )}
             {effectiveStreak > 0 && (
