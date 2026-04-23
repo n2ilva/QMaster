@@ -88,7 +88,11 @@ export function QuickResponseScreen() {
   const topPadding = useTopContentPadding();
   const bottomPadding = useTabContentPadding();
   const { user } = useAuth();
-  const { refreshUserProgress, quickResponseCatalog } = useData();
+  const { refreshUserProgress, quickResponseCatalog, loadQuickResponseCatalog } = useData();
+
+  useEffect(() => {
+    loadQuickResponseCatalog();
+  }, [loadQuickResponseCatalog]);
 
   // Catálogo vem do Firestore via DataProvider (preload).
   const data = (quickResponseCatalog as QuickResponseData | null) ?? EMPTY_QUICK_RESPONSE_DATA;

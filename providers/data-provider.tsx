@@ -48,6 +48,9 @@ type DataContextValue = {
   refreshUserProgress: () => Promise<void>;
   /** Re-fetch the entire catalog (rarely needed) */
   refreshCatalog: () => Promise<void>;
+  loadDatacenterCatalog: () => Promise<void>;
+  loadQuickResponseCatalog: () => Promise<void>;
+  loadAcheOErroCatalog: () => Promise<void>;
 };
 
 const DataContext = createContext<DataContextValue | undefined>(undefined);
@@ -84,22 +87,46 @@ export function DataProvider({ children }: PropsWithChildren) {
   const refreshCatalog = useCallback(async () => {
     try {
       await Promise.all([cacheRemove('catalog'), cacheRemove('dbStats')]);
-      const [catalog, stats, dcCatalog, qrCatalog, aoerroCatalog] = await Promise.all([
+      const [catalog, stats] = await Promise.all([
         getTrackCatalog(),
         getDatabaseStats(),
-        fetchDataCenterCatalog(),
-        fetchQuickResponseCatalog(),
-        fetchAcheOErroCatalog(),
       ]);
       setTrackCatalog(catalog);
       setDbStats(stats);
-      setDatacenterCatalog(dcCatalog);
-      setQuickResponseCatalog(qrCatalog);
-      setAcheOErroCatalog(aoerroCatalog);
     } catch (error) {
-      console.error('[DataProvider] Erro ao carregar catálogo:', error);
+      console.error('[DataProvider] Erro ao carregar catálogo base:', error);
     }
   }, []);
+
+  const loadDatacenterCatalog = useCallback(async () => {
+    if (datacenterCatalog) return;
+    try {
+      const dcCatalog = await fetchDataCenterCatalog();
+      setDatacenterCatalog(dcCatalog);
+    } catch (e) {
+      console.error('[DataProvider] Erro ao carregar datacenter:', e);
+    }
+  }, [datacenterCatalog]);
+
+  const loadQuickResponseCatalog = useCallback(async () => {
+    if (quickResponseCatalog) return;
+    try {
+      const qrCatalog = await fetchQuickResponseCatalog();
+      setQuickResponseCatalog(qrCatalog);
+    } catch (e) {
+      console.error('[DataProvider] Erro ao carregar quick response:', e);
+    }
+  }, [quickResponseCatalog]);
+
+  const loadAcheOErroCatalog = useCallback(async () => {
+    if (acheOErroCatalog) return;
+    try {
+      const aoerroCatalog = await fetchAcheOErroCatalog();
+      setAcheOErroCatalog(aoerroCatalog);
+    } catch (e) {
+      console.error('[DataProvider] Erro ao carregar ache o erro:', e);
+    }
+  }, [acheOErroCatalog]);
 
   const refreshUserProgress = useCallback(async () => {
     if (!user) return;
@@ -133,22 +160,16 @@ export function DataProvider({ children }: PropsWithChildren) {
 
         // Step 1: Catalog + Stats + Glossary + Game catalogs (independent of user)
         setPreloadProgress(10);
-        const [catalog, stats, , dcCatalog, qrCatalog, aoerroCatalog] = await withRetry(() =>
+        const [catalog, stats] = await withRetry(() =>
           Promise.all([
             getTrackCatalog(),
             getDatabaseStats(),
             preloadGlossary(),
-            fetchDataCenterCatalog(),
-            fetchQuickResponseCatalog(),
-            fetchAcheOErroCatalog(),
           ])
         );
         if (cancelled) return;
         setTrackCatalog(catalog);
         setDbStats(stats);
-        setDatacenterCatalog(dcCatalog);
-        setQuickResponseCatalog(qrCatalog);
-        setAcheOErroCatalog(aoerroCatalog);
         setPreloadProgress(50);
 
         // Step 2: User progress
@@ -220,6 +241,9 @@ export function DataProvider({ children }: PropsWithChildren) {
       acheOErroCatalog,
       refreshUserProgress,
       refreshCatalog,
+      loadDatacenterCatalog,
+      loadQuickResponseCatalog,
+      loadAcheOErroCatalog,
     }),
     [
       isPreloading,
@@ -232,6 +256,9 @@ export function DataProvider({ children }: PropsWithChildren) {
       acheOErroCatalog,
       refreshUserProgress,
       refreshCatalog,
+      loadDatacenterCatalog,
+      loadQuickResponseCatalog,
+      loadAcheOErroCatalog,
     ],
   );
 

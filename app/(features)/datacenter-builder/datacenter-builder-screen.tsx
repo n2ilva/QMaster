@@ -108,7 +108,11 @@ export function DataCenterBuilderScreen() {
   const topPadding = useTopContentPadding();
   const bottomPadding = useTabContentPadding();
   const { user } = useAuth();
-  const { datacenterCatalog } = useData();
+  const { datacenterCatalog, loadDatacenterCatalog, isPreloading } = useData();
+
+  useEffect(() => {
+    loadDatacenterCatalog();
+  }, [loadDatacenterCatalog]);
 
   // Catálogo vem do Firestore via DataProvider (preload). Enquanto não chega,
   // usamos um fallback vazio para não quebrar renderização.

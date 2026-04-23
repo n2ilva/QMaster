@@ -29,7 +29,7 @@ export function AcheOErroScreen() {
   const topPadding = useTopContentPadding();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { acheOErroCatalog, isPreloading } = useData();
+  const { acheOErroCatalog, isPreloading, loadAcheOErroCatalog } = useData();
   const { width } = useWindowDimensions();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -57,7 +57,11 @@ export function AcheOErroScreen() {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [moveCount, setMoveCount] = useState(0);
   const [userProgress, setUserProgress] = useState<GlobalProgress>({});
-  // allExercises is derived from the Firestore catalog (no local JSON imports)
+  
+  useEffect(() => {
+    loadAcheOErroCatalog();
+  }, [loadAcheOErroCatalog]);
+
   const allExercises = useMemo(() => parseCatalogToExercises(acheOErroCatalog), [acheOErroCatalog]);
   const isLoading = isPreloading || (acheOErroCatalog === null);
   const [showCompletionEffect, setShowCompletionEffect] = useState(false);
