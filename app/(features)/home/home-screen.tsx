@@ -24,6 +24,8 @@ export function HomeScreen() {
     dbStats: stats,
     userProgress: progress,
     quickResponseCatalog,
+    datacenterCatalog,
+    acheOErroCatalog,
   } = useData();
   const layoutMode = useLayoutMode();
   const { isDesktop } = useScreenSize();
@@ -41,31 +43,26 @@ export function HomeScreen() {
   }, [quickResponseCatalog]);
 
   const totalDataCenter = useMemo(() => {
-    // Lê direto do JSON local — mesma lógica do normalizeCatalog no
-    // datacenter-builder-screen: só conta níveis com inventário preenchido
-    // (os demais são apenas documentação e não aparecem no jogo).
-    const dc = require('@/data/data-center/datacenterbuild.json');
-    const levels = (dc?.levels as { inventory?: unknown[] }[] | undefined) ?? [];
+    if (!datacenterCatalog) return 0;
+    const levels = (datacenterCatalog?.levels as { inventory?: unknown[] }[] | undefined) ?? [];
     return levels.filter((lvl) => (lvl.inventory?.length ?? 0) > 0).length;
-  }, []);
+  }, [datacenterCatalog]);
 
   const totalDebug = useMemo(() => {
-    // Import json data directly for stats
-    const js = require('@/data/ache-o-erro/javascript.json');
-    const java = require('@/data/ache-o-erro/java.json');
-    const py = require('@/data/ache-o-erro/python.json');
-    const cs = require('@/data/ache-o-erro/c-sharp.json');
-    
+    if (!acheOErroCatalog || !acheOErroCatalog.languages) return 0;
     let count = 0;
-    [js.javascript, java.java, py.python, cs.csharp].forEach(lang => {
-      if (lang?.levels) {
-        Object.values(lang.levels).forEach((lvl: any) => {
+    const langs = acheOErroCatalog.languages as Record<string, any>;
+    Object.values(langs).forEach((langData: any) => {
+      // langData pode ter a chave da linguagem dentro (ex: langData.javascript.levels)
+      const inner = Object.values(langData)[0] as any;
+      if (inner?.levels) {
+        Object.values(inner.levels).forEach((lvl: any) => {
           count += (lvl.questions?.length ?? 0);
         });
       }
     });
     return count;
-  }, []);
+  }, [acheOErroCatalog]);
 
   const themes: HomeThemeItem[] = trackCatalog
     .map((item) => {
